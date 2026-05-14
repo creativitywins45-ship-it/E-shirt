@@ -1,9 +1,78 @@
+<!--
+  ╔══════════════════════════════════════════════╗
+  ║        FIREBASE SETUP REQUIRED               ║
+  ╠══════════════════════════════════════════════╣
+  ║  Before this website works, you must:        ║
+  ║                                              ║
+  ║  1. Go to https://console.firebase.google.com║
+  ║  2. Create a new project                     ║
+  ║  3. Add a Web App to the project             ║
+  ║  4. Enable Authentication:                   ║
+  ║     - Email/Password provider                ║
+  ║     - Google provider                        ║
+  ║  5. Copy your Firebase config and replace    ║
+  ║     the placeholder values in firebaseConfig ║
+  ║  6. Add your domain to Authorized Domains    ║
+  ║     in Firebase Console → Authentication     ║
+  ║     → Settings → Authorized domains          ║
+  ║  For Google Sign In on AI Studio preview,    ║
+  ║  add: studio.firebase.google.com             ║
+  ╚══════════════════════════════════════════════╝
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>E-shirt | Wear What Defines You</title>
+
+  <script type="module">
+    import { initializeApp } from 
+      "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { 
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      signInWithPopup,
+      GoogleAuthProvider,
+      sendEmailVerification,
+      sendPasswordResetEmail,
+      signOut,
+      onAuthStateChanged
+    } from 
+      "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    // ── FIREBASE CONFIG ──────────────────────────────
+    // The developer must replace these placeholder values
+    // with their actual Firebase project config from:
+    // Firebase Console → Project Settings → Your Apps → SDK setup
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const googleProvider = new GoogleAuthProvider();
+
+    // Make auth functions available globally to 
+    // the rest of the (non-module) script
+    window._auth = auth;
+    window._googleProvider = googleProvider;
+    window._firebaseFns = {
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      signInWithPopup,
+      sendEmailVerification,
+      sendPasswordResetEmail,
+      signOut,
+      onAuthStateChanged
+    };
+  </script>
   
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -870,6 +939,55 @@
     }
 
     /* Auth Modals */
+    .google-btn {
+      width: 100%;
+      background: white;
+      border: 1.5px solid #ddd;
+      color: var(--charcoal);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .google-btn:hover { background: #f8f8f8; border-color: #bbb; }
+    .google-btn:active { transform: scale(0.98); }
+
+    .inline-error {
+      background: #FFF3F3;
+      border-left: 3px solid #e74c3c;
+      color: #c0392b;
+      font-size: 13px;
+      padding: 0.8rem;
+      margin-bottom: 1.5rem;
+      border-radius: 4px;
+      animation: fadeSlideDown 0.3s ease forwards;
+    }
+
+    .pwd-toggle {
+      position: absolute;
+      right: 0;
+      top: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: #888;
+      padding: 0 0.5rem;
+    }
+
+    .btn-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -1070,13 +1188,14 @@
     input[type=range] { accent-color: var(--coral); }
     
     .size-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .size-pill { width: 40px; height: 40px; border: 1px solid #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 0.85rem; color: var(--charcoal-light); background: white; transition: all 0.2s; }
-    .size-pill.active, .size-pill:hover { border-color: var(--coral); color: var(--coral); background: rgba(255, 77, 48, 0.05); }
+    .size-pill { width: 40px; height: 40px; border: 1px solid #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 0.85rem; color: #1A1A1A; background: white; transition: all 0.2s; cursor: pointer; }
+    .size-pill:hover:not(.active) { background: #fff0ee; border-color: #ddd; }
+    .size-pill.active { background: var(--coral); color: white; border-color: var(--coral); }
     
     .color-swatches { display: flex; flex-wrap: wrap; gap: 0.6rem; }
-    .color-swatch { width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); cursor: pointer; position: relative; transition: transform 0.2s; }
-    .color-swatch.active { transform: scale(1.15); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--coral); }
-    .color-swatch:hover { transform: scale(1.1); }
+    .color-swatch { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ccc; cursor: pointer; position: relative; transition: transform 0.2s; }
+    .color-swatch.active { border: 2px solid white; box-shadow: 0 0 0 2px #FF4D30; transform: scale(1.1); }
+    .color-swatch:hover:not(.active) { transform: scale(1.1); }
     
     .shop-main-content { flex: 1; min-width: 0; }
     .shop-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
@@ -1189,14 +1308,74 @@
     .toast-icon { width: 24px; height: 24px; background: var(--coral); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; }
     
     .mobile-only { display: none; }
+    
+    #filterOverlay {
+        z-index: 499;
+        top: var(--nav-height);
+        height: calc(100vh - var(--nav-height));
+    }
+    
+    .filter-close-btn {
+        width: 36px;
+        height: 36px;
+        background: #f5f5f5;
+        border: none;
+        border-radius: 50%;
+        color: #1A1A1A;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 200ms ease;
+    }
+    .filter-close-btn:hover {
+        background: #FF4D30;
+        color: white;
+        transform: scale(1.08);
+    }
+    .filter-close-btn:active {
+        transform: scale(0.93);
+    }
+    
+    .dual-slider-container { position: relative; width: 100%; height: 35px; margin-top: 10px; }
+    .dual-slider-track { position: absolute; top: 15px; left: 0; right: 0; height: 4px; background: #eee; border-radius: 2px; }
+    .dual-slider-fill { position: absolute; top: 15px; height: 4px; background: var(--coral); border-radius: 2px; }
+    input[type="range"].dual-range { position: absolute; top: 9px; left: 0; width: 100%; pointer-events: none; -webkit-appearance: none; background: transparent; z-index: 2; margin: 0; }
+    input[type="range"].dual-range::-webkit-slider-thumb { pointer-events: all; -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--coral); cursor: pointer; }
+    input[type="range"].dual-range::-moz-range-thumb { pointer-events: all; width: 16px; height: 16px; border-radius: 50%; background: var(--coral); cursor: pointer; border: none; }
+    
+    /* custom checkbox styles */
+    .custom-checkbox {
+       appearance: none; -webkit-appearance: none;
+       width: 18px; height: 18px; border: 1px solid #ccc;
+       border-radius: 3px; background: white; cursor: pointer;
+       position: relative; transition: background 150ms ease, border-color 150ms ease;
+    }
+    .custom-checkbox:checked {
+       background: #FF4D30; border-color: #FF4D30;
+    }
+    .custom-checkbox:checked::after {
+       content: '✓'; position: absolute; top: 50%; left: 50%;
+       transform: translate(-50%, -50%); color: white;
+       font-size: 12px; font-weight: bold;
+    }
+
+    .filter-count-badge {
+       background: #FF4D30; color: white; display: inline-block;
+       min-width: 18px; height: 18px; line-height: 18px; border-radius: 9px;
+       font-size: 11px; text-align: center; margin-left: 0.5rem; padding: 0 4px;
+       font-weight: 600;
+    }
+
     @media (max-width: 900px) {
-        .shop-sidebar { position: fixed; top: 0; left: -100%; width: 100%; max-width: 320px; height: 100vh; max-height: none; z-index: 1005; border-radius: 0; box-shadow: 5px 0 30px rgba(0,0,0,0.2); transition: left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); padding-bottom: 80px; }
+        .shop-sidebar { position: fixed; top: var(--nav-height); left: -100%; width: 100%; max-width: 320px; height: calc(100vh - var(--nav-height)); max-height: none; z-index: 500; border-radius: 0; box-shadow: 5px 0 30px rgba(0,0,0,0.2); transition: left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); padding-bottom: 80px; }
         .shop-sidebar.active { left: 0; }
         .sidebar-header { margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; }
-        .sidebar-header h3 { font-size: 1.3rem; margin: 0; }
+        .sidebar-header h3 { font-size: 1.3rem; margin: 0; display: flex; align-items: center; }
         .mobile-only { display: block; }
-        .drawer-close { margin: 0; }
-        .apply-btn { position: fixed; bottom: 0; left: -100%; width: 100%; max-width: 320px; transition: left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); z-index: 1006; border-radius: 0; padding: 1.2rem; font-size: 1.1rem; }
+        .apply-btn { position: fixed; bottom: 0; left: -100%; width: 100%; max-width: 320px; transition: left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); z-index: 501; border-radius: 0; padding: 1.2rem; font-size: 1.1rem; }
         .shop-sidebar.active + .apply-btn { left: 0; }
         .view-toggles { display: none; } 
     }
@@ -1431,13 +1610,18 @@
               <i class="fa-solid fa-chevron-down avatar-arrow"></i>
           </div>
           <div class="dots-dropdown" id="avatarDropdown">
+              <div style="padding: 0.8rem 1.2rem;">
+                 <div id="avatarDropdownName" style="font-weight: 700; color: var(--charcoal); font-size: 0.95rem;">👤 John Doe</div>
+                 <div id="avatarDropdownEmail" style="color: #888; font-size: 0.85rem; margin-top: 0.2rem;">✉️ user@email.com</div>
+              </div>
+              <hr style="border:none; border-top:1px solid #eee; margin:4px 0;">
               <a href="javascript:void(0)" onclick="toggleAvatarDropdown(); openModal('signIn')"><i class="fa-solid fa-user"></i> My Account</a>
               <a href="javascript:void(0)" onclick="toggleAvatarDropdown(); showOrdersPage(new Event('click'))"><i class="fa-solid fa-box"></i> My Orders</a>
               <hr style="border:none; border-top:1px solid #eee; margin:4px 0;">
-              <a href="javascript:void(0)" onclick="toggleAvatarDropdown(); handleLogOut()" style="color: #e74c3c;"><i class="fa-solid fa-door-open" style="color: #e74c3c;"></i> Sign Out</a>
+              <a href="javascript:void(0)" onclick="toggleAvatarDropdown(); handleSignOut()" style="color: #e74c3c;"><i class="fa-solid fa-door-open" style="color: #e74c3c;"></i> Sign Out</a>
           </div>
         </div>
-        <button class="btn btn-outline" id="navLogOut" style="display:none;" onclick="handleLogOut()">Log Out</button>
+        <button class="btn btn-outline" id="navLogOut" style="display:none;" onclick="handleSignOut()">Log Out</button>
         <div class="dots-menu-container">
            <button class="dots-menu-btn" onclick="toggleDotsMenu()">
              <i class="fa-solid fa-ellipsis-vertical"></i>
@@ -1447,7 +1631,7 @@
                <a href="javascript:void(0)" onclick="toggleDotsMenu(); showShopPage(event)"><i class="fa-solid fa-bag-shopping"></i> Shop</a>
                <a href="javascript:void(0)" onclick="toggleDotsMenu(); showOrdersPage(event)"><i class="fa-solid fa-box"></i> Orders</a>
                <a href="javascript:void(0)" id="dotsSignIn" onclick="toggleDotsMenu(); clearPendingAction(); openModal('signIn')"><i class="fa-solid fa-user"></i> Account</a>
-               <a href="javascript:void(0)" id="dotsLogOut" style="display:none;" onclick="toggleDotsMenu(); handleLogOut()"><i class="fa-solid fa-sign-out"></i> Log Out</a>
+               <a href="javascript:void(0)" id="dotsLogOut" style="display:none;" onclick="toggleDotsMenu(); handleSignOut()"><i class="fa-solid fa-sign-out"></i> Log Out</a>
                <a href="javascript:void(0)" onclick="toggleDotsMenu(); showLandingPage(event); setTimeout(()=>document.getElementById('about').scrollIntoView(),10)"><i class="fa-solid fa-circle-info"></i> About</a>
                <a href="javascript:void(0)" onclick="toggleDotsMenu(); showLandingPage(event); setTimeout(()=>document.getElementById('contact').scrollIntoView(),10)"><i class="fa-solid fa-envelope"></i> Contact</a>
            </div>
@@ -1473,7 +1657,7 @@
     <div class="mobile-actions">
       <button class="btn btn-outline" id="mobSignIn" onclick="toggleMobileMenu(); clearPendingAction(); openModal('signIn')">Sign In</button>
       <button class="btn btn-coral" id="mobSignUp" onclick="toggleMobileMenu(); clearPendingAction(); openModal('signUp')">Sign Up</button>
-      <button class="btn btn-outline" id="mobLogOut" style="display:none;" onclick="toggleMobileMenu(); handleLogOut()">Log Out</button>
+      <button class="btn btn-outline" id="mobLogOut" style="display:none;" onclick="toggleMobileMenu(); handleSignOut()">Log Out</button>
     </div>
   </div>
 
@@ -1621,16 +1805,16 @@
        </div>
 
        <div class="shop-top-bar">
-          <button class="btn btn-outline mobile-only" style="padding: 0.6rem 1rem;" onclick="toggleShopSidebar()"><i class="fa-solid fa-filter"></i> Filters</button>
+          <button class="btn btn-outline mobile-only" style="padding: 0.6rem 1rem;" onclick="toggleShopSidebar()"><i class="fa-solid fa-filter"></i> Filters <span id="mobileFilterCountBadge" class="filter-count-badge" style="display:none;">0</span></button>
           <div class="shop-search">
              <i class="fa-solid fa-search"></i>
-             <input type="text" id="shopSearchInput" placeholder="Search products..." onkeyup="handleShopFilter()">
+             <input type="text" id="shopSearchInput" placeholder="Search products..." oninput="handleSearchInput()">
           </div>
           <div class="shop-sort-view">
-             <select id="shopSortSelect" onchange="handleShopFilter()">
+             <select id="shopSortSelect" onchange="handleSortSelect()">
                  <option value="featured">Featured</option>
-                 <option value="low-to-high">Price: Low to High</option>
-                 <option value="high-to-low">Price: High to Low</option>
+                 <option value="price-low">Price: Low to High</option>
+                 <option value="price-high">Price: High to Low</option>
                  <option value="newest">Newest</option>
                  <option value="top-rated">Top Rated</option>
              </select>
@@ -1642,55 +1826,61 @@
        </div>
 
        <div class="shop-layout">
+          <div class="drawer-overlay" id="filterOverlay" onclick="toggleShopSidebar()"></div>
           <!-- Sidebar -->
           <aside class="shop-sidebar" id="shopSidebar">
-             <div class="sidebar-header mobile-only">
-                <h3>Filters</h3>
-                <button class="drawer-close" onclick="toggleShopSidebar()"><i class="fa-solid fa-xmark"></i></button>
+             <div class="sidebar-header">
+                <h3>Filters <span id="desktopFilterCountBadge" class="filter-count-badge" style="display:none;">0</span></h3>
+                <button class="filter-close-btn mobile-only" onclick="toggleShopSidebar()">✕</button>
              </div>
              <div class="sidebar-clear">
-                 <button onclick="clearShopFilters()">Clear Filters</button>
+                 <button onclick="resetAllFilters()">Clear Filters</button>
              </div>
              
              <div class="filter-section">
                 <h4>Categories</h4>
                 <div class="filter-options" id="categoryFilters">
-                   <label><input type="checkbox" value="T-Shirts" onchange="handleShopFilter()"> T-Shirts</label>
-                   <label><input type="checkbox" value="Formal Shirts" onchange="handleShopFilter()"> Formal Shirts</label>
-                   <label><input type="checkbox" value="Casual Shirts" onchange="handleShopFilter()"> Casual Shirts</label>
-                   <label><input type="checkbox" value="Polo Shirts" onchange="handleShopFilter()"> Polo Shirts</label>
-                   <label><input type="checkbox" value="Oversized" onchange="handleShopFilter()"> Oversized</label>
-                   <label><input type="checkbox" value="Linen Shirts" onchange="handleShopFilter()"> Linen Shirts</label>
+                   <label><input type="checkbox" class="custom-checkbox" value="T-Shirts" onchange="toggleCategoryFilter(this.value, this.checked)"> T-Shirts</label>
+                   <label><input type="checkbox" class="custom-checkbox" value="Formal Shirts" onchange="toggleCategoryFilter(this.value, this.checked)"> Formal Shirts</label>
+                   <label><input type="checkbox" class="custom-checkbox" value="Casual Shirts" onchange="toggleCategoryFilter(this.value, this.checked)"> Casual Shirts</label>
+                   <label><input type="checkbox" class="custom-checkbox" value="Polo Shirts" onchange="toggleCategoryFilter(this.value, this.checked)"> Polo Shirts</label>
+                   <label><input type="checkbox" class="custom-checkbox" value="Oversized" onchange="toggleCategoryFilter(this.value, this.checked)"> Oversized</label>
+                   <label><input type="checkbox" class="custom-checkbox" value="Linen Shirts" onchange="toggleCategoryFilter(this.value, this.checked)"> Linen Shirts</label>
                 </div>
              </div>
 
              <div class="filter-section">
                 <h4>Price Range: <span id="priceDisplay" class="price-display-val">$0 - $200</span></h4>
-                <input type="range" id="priceRange" min="0" max="200" value="200" oninput="document.getElementById('priceDisplay').textContent = '$0 - $' + this.value" onchange="handleShopFilter()" style="width: 100%;">
+                <div class="dual-slider-container">
+                    <div class="dual-slider-track"></div>
+                    <div class="dual-slider-fill" id="dualSliderFill" style="left: 0%; right: 0%;"></div>
+                    <input type="range" class="dual-range" id="priceMinRange" min="0" max="200" value="0" oninput="handlePriceSlider()">
+                    <input type="range" class="dual-range" id="priceMaxRange" min="0" max="200" value="200" oninput="handlePriceSlider()">
+                </div>
              </div>
 
              <div class="filter-section">
                 <h4>Size</h4>
                 <div class="size-pills" id="sizeFilters">
-                   <button class="size-pill" onclick="toggleFilterPill(this); handleShopFilter()">XS</button>
-                   <button class="size-pill" onclick="toggleFilterPill(this); handleShopFilter()">S</button>
-                   <button class="size-pill" onclick="toggleFilterPill(this); handleShopFilter()">M</button>
-                   <button class="size-pill" onclick="toggleFilterPill(this); handleShopFilter()">L</button>
-                   <button class="size-pill" onclick="toggleFilterPill(this); handleShopFilter()">XL</button>
-                   <button class="size-pill" onclick="toggleFilterPill(this); handleShopFilter()">XXL</button>
+                   <button class="size-pill" onclick="toggleSizeFilter(this, 'XS')">XS</button>
+                   <button class="size-pill" onclick="toggleSizeFilter(this, 'S')">S</button>
+                   <button class="size-pill" onclick="toggleSizeFilter(this, 'M')">M</button>
+                   <button class="size-pill" onclick="toggleSizeFilter(this, 'L')">L</button>
+                   <button class="size-pill" onclick="toggleSizeFilter(this, 'XL')">XL</button>
+                   <button class="size-pill" onclick="toggleSizeFilter(this, 'XXL')">XXL</button>
                 </div>
              </div>
 
              <div class="filter-section">
                 <h4>Color</h4>
                 <div class="color-swatches" id="colorFilters">
-                   <button class="color-swatch" style="background:#fff; border: 1px solid #ccc;" data-color="White" onclick="toggleFilterPill(this); handleShopFilter()"></button>
-                   <button class="color-swatch" style="background:#1a1a1a;" data-color="Black" onclick="toggleFilterPill(this); handleShopFilter()"></button>
-                   <button class="color-swatch" style="background:#1e3a5f;" data-color="Navy" onclick="toggleFilterPill(this); handleShopFilter()"></button>
-                   <button class="color-swatch" style="background:#808080;" data-color="Grey" onclick="toggleFilterPill(this); handleShopFilter()"></button>
-                   <button class="color-swatch" style="background:#556b2f;" data-color="Olive" onclick="toggleFilterPill(this); handleShopFilter()"></button>
-                   <button class="color-swatch" style="background:#FF4D30;" data-color="Coral" onclick="toggleFilterPill(this); handleShopFilter()"></button>
-                   <button class="color-swatch" style="background:#f5f5dc;" data-color="Beige" onclick="toggleFilterPill(this); handleShopFilter()"></button>
+                   <button class="color-swatch" style="background:#fff; border: 1px solid #ccc;" data-color="White" onclick="toggleColorFilter(this, 'White')"></button>
+                   <button class="color-swatch" style="background:#1a1a1a;" data-color="Black" onclick="toggleColorFilter(this, 'Black')"></button>
+                   <button class="color-swatch" style="background:#1e3a5f;" data-color="Navy" onclick="toggleColorFilter(this, 'Navy')"></button>
+                   <button class="color-swatch" style="background:#808080;" data-color="Grey" onclick="toggleColorFilter(this, 'Grey')"></button>
+                   <button class="color-swatch" style="background:#556b2f;" data-color="Olive" onclick="toggleColorFilter(this, 'Olive')"></button>
+                   <button class="color-swatch" style="background:#FF4D30;" data-color="Coral" onclick="toggleColorFilter(this, 'Coral')"></button>
+                   <button class="color-swatch" style="background:#f5f5dc;" data-color="Beige" onclick="toggleColorFilter(this, 'Beige')"></button>
                 </div>
              </div>
           </aside>
@@ -1701,10 +1891,11 @@
              <div class="shop-grid" id="fullShopGrid">
                  <!-- Populated by JS -->
              </div>
-             <div id="noProductsMsg" style="display:none; text-align:center; padding: 4rem 0; color: #888;">
-                 <i class="fa-solid fa-box-open" style="font-size: 3rem; margin-bottom: 1rem; color: #ddd;"></i>
-                 <p>No products match your filters.</p>
-                 <button class="btn btn-outline" style="margin-top: 1rem;" onclick="clearShopFilters()">Clear Filters</button>
+             <div id="noProductsMsg" style="display:none; text-align:center; padding: 4rem 1rem; color: #888;">
+                 <div style="font-size: 60px; margin-bottom: 1rem;">🔍</div>
+                 <h3 style="font-size: 1.5rem; color: var(--charcoal); margin-bottom: 0.5rem; font-family: var(--font-heading);">No products found</h3>
+                 <p style="margin-bottom: 1.5rem;">Try adjusting your filters or search query</p>
+                 <button class="btn btn-coral" onclick="resetAllFilters()">Clear All Filters</button>
              </div>
           </div>
        </div>
@@ -1937,26 +2128,55 @@
         <div class="modal-logo">E-shirt.</div>
         <p>Welcome back</p>
       </div>
-      <form onsubmit="handleAuthSubmit(event, 'signIn')">
-        <div id="signInError" style="color: #e53e3e; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; display: none;"></div>
+
+      <button type="button" class="btn google-btn" id="google-signin-btn" onclick="handleGoogleSignIn()">
+        <svg width="18" height="18" viewBox="0 0 18 18">
+          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+          <path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/>
+          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div style="display:flex; align-items:center; margin: 1.5rem 0;">
+        <hr style="flex:1; border:none; border-top:1px solid #ccc;">
+        <span style="padding:0 0.8rem; color:#888; font-size:0.85rem; background: var(--bg-cream);">or</span>
+        <hr style="flex:1; border:none; border-top:1px solid #ccc;">
+      </div>
+
+      <form onsubmit="event.preventDefault(); handleEmailSignIn();" novalidate>
+        <div id="signin-form-error" class="inline-error" style="display: none;"></div>
+        
         <div class="form-group" style="margin-bottom: 2rem;">
-          <input type="email" class="form-control" placeholder="Email" id="loginEmail" required>
+          <input type="email" class="form-control" placeholder="Email" id="signin-email" required oninput="hideInlineError('signin-form-error')">
           <label class="form-label">Email</label>
         </div>
-        <div class="form-group" style="margin-bottom: 2rem;">
-          <input type="password" class="form-control" placeholder="Password" id="loginPwd" required>
+        <div class="form-group" style="margin-bottom: 0.5rem; position: relative;">
+          <input type="password" class="form-control" placeholder="Password" id="signin-password" required oninput="hideInlineError('signin-form-error')">
           <label class="form-label">Password</label>
+          <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility('signin-password', this)">👁</button>
         </div>
-        <button type="submit" class="btn btn-coral">Sign In</button>
+        <div style="text-align: right; margin-bottom: 2rem;">
+          <a href="javascript:void(0)" class="forgot-pwd-link" onclick="toggleForgotPassword()">Forgot password?</a>
+        </div>
+        
+        <div id="forgotPwdSection" class="forgot-pwd-section" style="display: none;">
+          <p style="font-size: 0.9rem; margin-bottom: 1rem;">Enter your email to receive a password reset link.</p>
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <input type="email" class="form-control" placeholder="Email" id="reset-email" oninput="hideInlineError('reset-form-error')">
+            <label class="form-label">Email</label>
+          </div>
+          <div id="reset-form-error" class="inline-error" style="display: none;"></div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button type="button" class="btn btn-coral" style="flex:1; padding: 0.6rem;" id="reset-btn" onclick="handlePasswordReset()">Send Reset Link</button>
+            <button type="button" class="btn btn-outline" style="flex:1; padding: 0.6rem;" onclick="toggleForgotPassword()">Cancel</button>
+          </div>
+          <hr style="margin-bottom: 1rem; margin-top: 1.5rem; border:none; border-top: 1px solid #eee;">
+        </div>
+
+        <button type="submit" class="btn btn-coral" id="signin-btn">Sign In</button>
       </form>
-      <div style="display:flex; align-items:center; margin: 1.5rem 0;">
-        <hr style="flex:1; border:none; border-top:1px solid #eee;">
-        <span style="padding:0 0.5rem; color:#999; font-size:0.85rem;">or</span>
-        <hr style="flex:1; border:none; border-top:1px solid #eee;">
-      </div>
-      <button type="button" class="btn btn-outline" style="width:100%; display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom: 1.5rem;" onclick="handleGoogleSignIn()">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width: 18px; height: 18px;"> Continue with Google
-      </button>
       <div class="modal-switch">
         Don't have an account? <button onclick="switchModal('signUp')">Sign Up</button>
       </div>
@@ -1976,48 +2196,64 @@
         <div class="modal-logo">E-shirt.</div>
         <p>Create an account</p>
       </div>
-      <form onsubmit="handleAuthSubmit(event, 'signUp')">
-        <div id="signUpError" style="color: #e53e3e; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; display: none;"></div>
+
+      <button type="button" class="btn google-btn" onclick="handleGoogleSignIn()">
+        <svg width="18" height="18" viewBox="0 0 18 18">
+          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+          <path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/>
+          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div style="display:flex; align-items:center; margin: 1.5rem 0;">
+        <hr style="flex:1; border:none; border-top:1px solid #ccc;">
+        <span style="padding:0 0.8rem; color:#888; font-size:0.85rem; background: var(--bg-cream);">or</span>
+        <hr style="flex:1; border:none; border-top:1px solid #ccc;">
+      </div>
+
+      <form onsubmit="event.preventDefault(); handleEmailSignUp();" novalidate>
+        <div id="signup-form-error" class="inline-error" style="display: none;"></div>
+        
         <div class="form-group" style="margin-bottom: 1.5rem;">
-          <input type="text" class="form-control" id="regName" placeholder="Name" required>
+          <input type="text" class="form-control" id="signup-name" placeholder="Name" required oninput="hideInlineError('signup-form-error')">
           <label class="form-label">Full Name</label>
         </div>
         <div class="form-group" style="margin-bottom: 1.5rem;">
-          <input type="email" class="form-control" placeholder="Email" id="regEmail" required>
+          <input type="email" class="form-control" placeholder="Email" id="signup-email" required oninput="hideInlineError('signup-form-error')">
           <label class="form-label">Email</label>
         </div>
-        <div class="form-group" style="margin-bottom: 1.5rem;">
-          <input type="password" class="form-control" placeholder="Password" required id="regPwd">
+        <div class="form-group" style="margin-bottom: 1.5rem; position: relative;">
+          <input type="password" class="form-control" placeholder="Password" required id="signup-password" oninput="hideInlineError('signup-form-error')">
           <label class="form-label">Password</label>
+          <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility('signup-password', this)">👁</button>
         </div>
-        <div class="form-group" style="margin-bottom: 2rem;">
-          <input type="password" class="form-control" placeholder="Confirm Password" required id="regPwdConfirm">
+        <div class="form-group" style="margin-bottom: 2rem; position: relative;">
+          <input type="password" class="form-control" placeholder="Confirm Password" required id="signup-confirm" oninput="hideInlineError('signup-form-error')">
           <label class="form-label">Confirm Password</label>
+          <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility('signup-confirm', this)">👁</button>
         </div>
-        <button type="submit" class="btn btn-coral">Create Account</button>
+        <button type="submit" class="btn btn-coral" id="signup-btn">Create Account</button>
       </form>
-      <div style="display:flex; align-items:center; margin: 1.5rem 0;">
-        <hr style="flex:1; border:none; border-top:1px solid #eee;">
-        <span style="padding:0 0.5rem; color:#999; font-size:0.85rem;">or</span>
-        <hr style="flex:1; border:none; border-top:1px solid #eee;">
-      </div>
-      <button type="button" class="btn btn-outline" style="width:100%; display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom: 1.5rem;" onclick="handleGoogleSignIn()">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width: 18px; height: 18px;"> Continue with Google
-      </button>
       <div class="modal-switch">
         Already have an account? <button onclick="switchModal('signIn')">Sign In</button>
       </div>
     </div>
     
     <!-- Verify Email Modal -->
-    <div class="modal" id="verifyEmailModal">
+    <div class="modal" id="verifyEmailModal" style="text-align: center;">
       <button class="modal-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
-      <div class="modal-header" style="margin-bottom: 1rem;">
-        <div class="modal-logo"><i class="fa-regular fa-envelope"></i></div>
-        <p style="margin-top: 1rem; margin-bottom: 1rem;" id="verifyEmailMsg">We have sent you a verification email.</p>
-      </div>
-      <div style="text-align: center;">
-         <button class="btn btn-coral" style="width: 100%;" onclick="switchModal('signIn')">Login</button>
+      <div style="font-size: 56px; margin-bottom: 1rem;">📧</div>
+      <h3 style="font-family: var(--font-heading); font-size: 1.8rem; margin-bottom: 1rem; color: var(--charcoal);">Verify Your Email</h3>
+      <p style="margin-bottom: 0.5rem;">We've sent a verification link to:</p>
+      <p id="verifyEmailTarget" style="color: var(--coral); font-weight: 700; margin-bottom: 1.5rem; word-break: break-all;">user@email.com</p>
+      <p style="margin-bottom: 1.5rem; font-size: 0.9rem; color: #555;">Please check your inbox and click the link to activate your account. Check your spam folder too!</p>
+      <button class="btn btn-outline" style="width: 100%; border-color: var(--charcoal); color: var(--charcoal); margin-bottom: 1rem;" onclick="switchModal('signIn')">I've Verified — Sign In Now</button>
+      
+      <div id="resendVerificationContainer" style="font-size: 0.85rem;">
+         <span id="resendTimer">Resend in 30s...</span>
+         <a href="javascript:void(0)" id="resendLink" style="display: none; color: #888; text-decoration: underline;" onclick="resendVerificationEmail()">Resend verification email</a>
       </div>
     </div>
   </div>
@@ -2110,6 +2346,183 @@
       { id: 24, name: "Sage Green Linen", category: "Linen Shirts", price: 77.99, desc: "Earthy breathable sage", emoji: "🥼", gradient: "linear-gradient(135deg, #7a9e7e, #9bbf9f)", image: "https://images.unsplash.com/photo-1563630423918-b58f07336ac9?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#7a9e7e,#9bbf9f)", rating: 4.8, reviews: 84 }
     ];
 
+    allProducts.forEach(p => {
+       if(p.category === 'T-Shirts' || p.category === 'Polo Shirts') p.availableSizes = ["XS","S","M","L","XL"];
+       else if(p.category === 'Oversized') p.availableSizes = ["S","M","L","XL","XXL"];
+       else p.availableSizes = ["XS","S","M","L","XL","XXL"];
+
+       const cMap = {
+           1: ["White"], 2: ["Black"], 3: ["Grey"], 4: ["Coral"], 5: ["Olive"], 6: ["Navy"],
+           7: ["Beige"], 8: ["Coral"], 9: ["Black"], 10: ["Coral","Navy"],
+           11: ["Navy"], 12: ["White"], 13: ["Olive"], 14: ["Coral","White"],
+           15: ["White","Beige"], 16: ["Navy"], 17: ["Coral","Grey"], 18: ["Olive"],
+           19: ["White"], 20: ["Navy","White"], 21: ["Grey","Black"], 22: ["Beige"],
+           23: ["Beige"], 24: ["Olive"]
+       };
+       p.colors = cMap[p.id] || [];
+    });
+
+    let activeFilters = {
+      categories: [],
+      minPrice: 0,
+      maxPrice: 200,
+      sizes: [],
+      colors: [],
+      searchQuery: '',
+      sortBy: 'featured'
+    };
+
+    function applyAllFilters() {
+      let result = [...allProducts];
+      if (activeFilters.categories.length > 0) {
+        result = result.filter(p => activeFilters.categories.includes(p.category));
+      }
+      result = result.filter(p => {
+        const price = p.salePrice || p.price;
+        return price >= activeFilters.minPrice && price <= activeFilters.maxPrice;
+      });
+      if (activeFilters.sizes.length > 0) {
+        result = result.filter(p => activeFilters.sizes.some(s => p.availableSizes.includes(s)));
+      }
+      if (activeFilters.colors.length > 0) {
+        result = result.filter(p => activeFilters.colors.some(c => p.colors.includes(c)));
+      }
+      if (activeFilters.searchQuery.trim() !== '') {
+        const q = activeFilters.searchQuery.toLowerCase();
+        result = result.filter(p => p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q) || p.desc?.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+      }
+      
+      if (activeFilters.sortBy === 'price-low') {
+        result.sort((a,b) => (a.salePrice||a.price) - (b.salePrice||b.price));
+      } else if (activeFilters.sortBy === 'price-high') {
+        result.sort((a,b) => (b.salePrice||b.price) - (a.salePrice||a.price));
+      } else if (activeFilters.sortBy === 'newest') {
+        result.sort((a,b) => (b.badge==='NEW'?1:0) - (a.badge==='NEW'?1:0));
+      } else if (activeFilters.sortBy === 'top-rated') {
+        result.sort((a,b) => b.rating - a.rating);
+      }
+      
+      renderShopGrid(result);
+      
+      const pCountText = document.querySelector('.product-count');
+      if (pCountText) pCountText.textContent = result.length + ' items';
+      
+      if (result.length === 0) {
+        document.getElementById('fullShopGrid').style.display = 'none';
+        document.getElementById('noProductsMsg').style.display = 'block';
+      } else {
+        document.getElementById('fullShopGrid').style.display = '';
+        document.getElementById('noProductsMsg').style.display = 'none';
+      }
+
+      updateFilterCountBadge();
+    }
+
+    function toggleCategoryFilter(val, isChecked) {
+       if(isChecked) {
+          if(!activeFilters.categories.includes(val)) activeFilters.categories.push(val);
+       } else {
+          activeFilters.categories = activeFilters.categories.filter(c => c !== val);
+       }
+       applyAllFilters();
+    }
+
+    function handlePriceSlider() {
+       let minVal = parseFloat(document.getElementById('priceMinRange').value) || 0;
+       let maxVal = parseFloat(document.getElementById('priceMaxRange').value) || 200;
+       
+       if (minVal >= maxVal) { minVal = maxVal - 10; document.getElementById('priceMinRange').value = minVal; }
+       if (maxVal <= minVal) { maxVal = minVal + 10; document.getElementById('priceMaxRange').value = maxVal; }
+       
+       activeFilters.minPrice = minVal;
+       activeFilters.maxPrice = maxVal;
+       
+       document.getElementById('priceDisplay').textContent = '$' + minVal + ' - $' + maxVal;
+       
+       const fillLeft = (minVal / 200) * 100;
+       const fillRight = 100 - (maxVal / 200) * 100;
+       document.getElementById('dualSliderFill').style.left = fillLeft + '%';
+       document.getElementById('dualSliderFill').style.right = fillRight + '%';
+       
+       applyAllFilters();
+    }
+
+    function toggleSizeFilter(btn, size) {
+       btn.classList.toggle('active');
+       if(btn.classList.contains('active')) {
+          if(!activeFilters.sizes.includes(size)) activeFilters.sizes.push(size);
+       } else {
+          activeFilters.sizes = activeFilters.sizes.filter(s => s !== size);
+       }
+       applyAllFilters();
+    }
+
+    function toggleColorFilter(btn, color) {
+       btn.classList.toggle('active');
+       if(btn.classList.contains('active')) {
+          if(!activeFilters.colors.includes(color)) activeFilters.colors.push(color);
+       } else {
+          activeFilters.colors = activeFilters.colors.filter(c => c !== color);
+       }
+       applyAllFilters();
+    }
+
+    function handleSearchInput() {
+       activeFilters.searchQuery = document.getElementById('shopSearchInput').value;
+       applyAllFilters();
+    }
+
+    function handleSortSelect() {
+       activeFilters.sortBy = document.getElementById('shopSortSelect').value;
+       applyAllFilters();
+    }
+
+    function resetAllFilters() {
+      document.getElementById('shopSearchInput').value = '';
+      document.getElementById('shopSortSelect').value = 'featured';
+      document.querySelectorAll('#categoryFilters input:checked').forEach(c => c.checked = false);
+      document.querySelectorAll('.size-pill.active').forEach(e => e.classList.remove('active'));
+      document.querySelectorAll('.color-swatch.active').forEach(e => e.classList.remove('active'));
+      
+      document.getElementById('priceMinRange').value = 0;
+      document.getElementById('priceMaxRange').value = 200;
+      document.getElementById('priceDisplay').textContent = '$0 - $200';
+      document.getElementById('dualSliderFill').style.left = '0%';
+      document.getElementById('dualSliderFill').style.right = '0%';
+      
+      activeFilters = {
+        categories: [],
+        minPrice: 0,
+        maxPrice: 200,
+        sizes: [],
+        colors: [],
+        searchQuery: '',
+        sortBy: 'featured'
+      };
+      
+      applyAllFilters();
+    }
+
+    function updateFilterCountBadge() {
+       const count = activeFilters.categories.length 
+           + (activeFilters.minPrice > 0 ? 1 : 0) 
+           + (activeFilters.maxPrice < 200 ? 1 : 0) 
+           + activeFilters.sizes.length 
+           + activeFilters.colors.length 
+           + (activeFilters.searchQuery.trim() !== '' ? 1 : 0);
+       
+       const mobileBadge = document.getElementById('mobileFilterCountBadge');
+       const desktopBadge = document.getElementById('desktopFilterCountBadge');
+       
+       if(count > 0) {
+           if(mobileBadge) { mobileBadge.style.display = 'inline-block'; mobileBadge.textContent = count; }
+           if(desktopBadge) { desktopBadge.style.display = 'inline-block'; desktopBadge.textContent = count; }
+       } else {
+           if(mobileBadge) mobileBadge.style.display = 'none';
+           if(desktopBadge) desktopBadge.style.display = 'none';
+       }
+    }
+
     let cart = [];
     let isUserSignedIn = false;
     let currentUserEmail = null;
@@ -2146,47 +2559,15 @@
        document.getElementById('fullShopGrid').className = 'shop-grid ' + (view === 'list' ? 'list-view' : '');
     }
 
+    function toggleShopSidebar() {
+       document.getElementById('shopSidebar').classList.toggle('active');
+       document.getElementById('filterOverlay').classList.toggle('active');
+    }
+
     function toggleFilterPill(elem) {
        elem.classList.toggle('active');
     }
-
-    function toggleShopSidebar() {
-       document.getElementById('shopSidebar').classList.toggle('active');
-    }
     
-    function clearShopFilters() {
-      document.getElementById('shopSearchInput').value = '';
-      document.getElementById('shopSortSelect').value = 'featured';
-      document.querySelectorAll('#categoryFilters input:checked').forEach(c => c.checked = false);
-      document.querySelectorAll('.size-pill.active, .color-swatch.active').forEach(e => e.classList.remove('active'));
-      document.getElementById('priceRange').value = 200;
-      document.getElementById('priceDisplay').textContent = '$0 - $200';
-      handleShopFilter(); // Re-apply
-    }
-    
-    function handleShopFilter() {
-      const searchQ = document.getElementById('shopSearchInput').value.toLowerCase();
-      const sortVal = document.getElementById('shopSortSelect').value;
-      const chkz = document.querySelectorAll('#categoryFilters input:checked');
-      const cats = Array.from(chkz).map(c => c.value);
-      const maxPrice = parseFloat(document.getElementById('priceRange').value) || 200;
-      
-      let filtered = allProducts.filter(p => {
-          const activePrice = p.salePrice || p.price;
-          if (activePrice > maxPrice) return false;
-          if (cats.length > 0 && !cats.includes(p.category)) return false;
-          if (searchQ && !p.name.toLowerCase().includes(searchQ) && !p.desc.toLowerCase().includes(searchQ)) return false;
-          return true;
-      });
-      
-      if(sortVal === 'low-to-high') filtered.sort((a,b) => (a.salePrice||a.price) - (b.salePrice||b.price));
-      else if(sortVal === 'high-to-low') filtered.sort((a,b) => (b.salePrice||b.price) - (a.salePrice||a.price));
-      else if(sortVal === 'top-rated') filtered.sort((a,b) => b.rating - a.rating);
-      else if(sortVal === 'newest') filtered.sort((a,b) => (a.badge==='NEW'?1:0) - (b.badge==='NEW'?1:0));
-      
-      renderShopGrid(filtered);
-    }
-
     function renderShopGrid(list) {
        const grid = document.getElementById('fullShopGrid');
        const noMsg = document.getElementById('noProductsMsg');
@@ -2704,23 +3085,6 @@
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    function updateNavbarAuthUI() {
-        const elsToHide = [document.getElementById('navSignIn'), document.getElementById('navSignUp'), document.getElementById('dotsSignIn'), document.getElementById('mobSignIn'), document.getElementById('mobSignUp')];
-        const elsToShow = [document.getElementById('userAvatarContainer'), document.getElementById('dotsLogOut'), document.getElementById('mobLogOut')];
-        
-        if (isUserSignedIn) {
-           elsToHide.forEach(el => { if(el) el.style.display = 'none'; });
-           elsToShow.forEach(el => { if(el) el.style.display = ''; });
-           if (document.getElementById('navAvatarInitials')) {
-               document.getElementById('navAvatarInitials').textContent = currentUserName.charAt(0).toUpperCase();
-               document.getElementById('navAvatarName').textContent = currentUserName;
-           }
-        } else {
-           elsToHide.forEach(el => { if(el) el.style.display = ''; });
-           elsToShow.forEach(el => { if(el) el.style.display = 'none'; });
-        }
-    }
-
     function switchModal(type) {
       document.querySelectorAll('.modal').forEach(m => m.classList.remove('active-modal'));
       document.getElementById(type + 'Modal').classList.add('active-modal');
@@ -2740,136 +3104,359 @@
       }
     }
 
-    async function handleAuthSubmit(e, type) {
-      e.preventDefault();
-      document.getElementById('signInError').style.display = 'none';
-      document.getElementById('signUpError').style.display = 'none';
-
-      const emailInput = document.getElementById(type === 'signIn' ? 'loginEmail' : 'regEmail');
-      const pwdInput = document.getElementById(type === 'signIn' ? 'loginPwd' : 'regPwd');
-      let valid = true;
-
-      if (!emailInput.value.includes('@') || !emailInput.value.includes('.')) {
-        emailInput.parentElement.classList.add('invalid-shake');
-        emailInput.classList.add('invalid-shake');
-        valid = false;
-      }
-      if (pwdInput.value.length < 6) {
-        pwdInput.parentElement.classList.add('invalid-shake');
-        pwdInput.classList.add('invalid-shake');
-        valid = false;
-      }
-      
-      if(type === 'signUp') {
-        const p2 = document.getElementById('regPwdConfirm');
-        if(pwdInput.value !== p2.value) {
-          p2.parentElement.classList.add('invalid-shake');
-          p2.classList.add('invalid-shake');
-          valid = false;
-        }
-      }
-
-      if (!valid) {
-        setTimeout(() => { document.querySelectorAll('.invalid-shake').forEach(el => el.classList.remove('invalid-shake')); }, 400);
-        return;
-      }
-
-      const btn = e.target.querySelector('button[type="submit"]');
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
-      btn.disabled = true;
-
-      setTimeout(() => {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        
-        isUserSignedIn = true;
-        currentUserEmail = emailInput.value;
-        currentUserName = currentUserEmail.split('@')[0];
-        currentUserName = currentUserName.charAt(0).toUpperCase() + currentUserName.slice(1);
-        
-        if (type === 'signUp') {
-           const nameInput = document.getElementById('regName');
-           if (nameInput && nameInput.value) {
-               currentUserName = nameInput.value.split(' ')[0];
-           }
-        }
-        
-        closeModals();
-        
-        if (type === 'signIn') {
-           showWelcomeToast(`👋 Welcome back, ${currentUserName}! You're signed in.`);
-        } else {
-           showWelcomeToast(`🎉 Account created! Welcome to E-shirt, ${currentUserName}!`);
-        }
-        
-        updateNavbarAuthUI();
-        
-        if (pendingAction) {
-           const action = pendingAction;
-           pendingAction = null;
-           if (action.type === 'addToCart') {
-               addToCart(action.payload.id, null);
-           } else if (action.type === 'orderNow') {
-               handleOrderNow(action.payload.id, null);
-           } else if (action.type === 'checkout') {
-               handleCheckout();
-           }
-        }
-      }, 600);
+// --- Auth JS Helpers ---
+    function setAuthButtonLoading(btnId, loading, text) {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      btn.disabled = loading;
+      btn.style.opacity = loading ? '0.75' : '1';
+      btn.innerHTML = loading 
+        ? `<span class="btn-spinner"></span> ${text}`
+        : text;
     }
 
-    async function handleLogOut() {
-        isUserSignedIn = false;
-        currentUserEmail = null;
-        currentUserName = null;
+    function handleFirebaseError(error, context) {
+      const messages = {
+        'auth/email-already-in-use': '⚠️ This email is already registered. Try signing in instead.',
+        'auth/invalid-email': '⚠️ Invalid email address format.',
+        'auth/weak-password': '⚠️ Password must be at least 6 characters.',
+        'auth/user-not-found': '⚠️ No account found with this email. Please sign up first.',
+        'auth/wrong-password': '⚠️ Incorrect password. Please try again.',
+        'auth/invalid-credential': '⚠️ Incorrect email or password. Please try again.',
+        'auth/too-many-requests': '⚠️ Too many failed attempts. Account temporarily locked. Try later.',
+        'auth/network-request-failed': '⚠️ Network error. Check your connection.',
+        'auth/popup-blocked': '⚠️ Popup was blocked by your browser. Please allow popups for this site.',
+        'auth/cancelled-popup-request': '⚠️ Sign in was cancelled.',
+        'auth/user-disabled': '⚠️ This account has been disabled.',
+      };
+
+      const msg = messages[error.code] || '⚠️ Something went wrong. Please try again.';
+      const errorId = context === 'signup' ? 'signup-form-error' : 'signin-form-error';
+      showInlineError(errorId, msg);
+    }
+
+    function showInlineError(elementId, msg) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      el.innerHTML = msg;
+      el.style.display = 'block';
+    }
+
+    function hideInlineError(elementId) {
+      const el = document.getElementById(elementId);
+      if (el) el.style.display = 'none';
+      if (elementId === 'signin-form-error') {
+         document.getElementById('resendVerificationContainerSignIn')?.remove();
+      }
+    }
+
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '👁🗨';
+      } else {
+        input.type = 'password';
+        btn.textContent = '👁';
+      }
+    }
+
+    function shakeField(id) {
+       const el = document.getElementById(id);
+       if(!el) return;
+       el.parentElement.classList.add('invalid-shake');
+       setTimeout(() => { el.parentElement.classList.remove('invalid-shake'); }, 400);
+    }
+
+    // --- Firebase Logic ---
+    function waitForFirebase(callback) {
+      if (window._firebaseFns && window._auth) {
+        callback();
+      } else {
+        setTimeout(() => waitForFirebase(callback), 100);
+      }
+    }
+
+    waitForFirebase(() => {
+      window._firebaseFns.onAuthStateChanged(
+        window._auth, 
+        (user) => {
+          if (user) {
+            isUserSignedIn = true;
+            currentUserEmail = user.email;
+            currentUserName = user.displayName || user.email.split('@')[0];
+            currentUserName = currentUserName.charAt(0).toUpperCase() + currentUserName.slice(1);
+            updateNavbarToSignedIn(user);
+          } else {
+            isUserSignedIn = false;
+            currentUserEmail = null;
+            currentUserName = null;
+            updateNavbarToSignedOut();
+          }
+        }
+      );
+    });
+
+    function updateNavbarToSignedIn(user) {
+        const elsToHide = [document.getElementById('navSignIn'), document.getElementById('navSignUp'), document.getElementById('dotsSignIn'), document.getElementById('mobSignIn'), document.getElementById('mobSignUp')];
+        const elsToShow = [document.getElementById('userAvatarContainer'), document.getElementById('dotsLogOut'), document.getElementById('mobLogOut')];
+        
+        elsToHide.forEach(el => { if(el) el.style.display = 'none'; });
+        elsToShow.forEach(el => { if(el) el.style.display = ''; });
+        
+        const avatarCircle = document.getElementById('navAvatarInitials');
+        if (avatarCircle) {
+           if (user.photoURL) {
+              avatarCircle.innerHTML = `<img src="${user.photoURL}" style="width:36px;height:36px;border-radius:50%;object-fit:cover">`;
+           } else {
+              avatarCircle.innerHTML = currentUserName.charAt(0).toUpperCase();
+           }
+        }
+        if (document.getElementById('navAvatarName')) {
+            document.getElementById('navAvatarName').textContent = currentUserName.split(' ')[0];
+        }
+        
+        document.getElementById('avatarDropdownName').textContent = '👤 ' + (user.displayName || currentUserName);
+        document.getElementById('avatarDropdownEmail').textContent = '✉️ ' + user.email;
+    }
+
+    function updateNavbarToSignedOut() {
+        const elsToHide = [document.getElementById('navSignIn'), document.getElementById('navSignUp'), document.getElementById('dotsSignIn'), document.getElementById('mobSignIn'), document.getElementById('mobSignUp')];
+        const elsToShow = [document.getElementById('userAvatarContainer'), document.getElementById('dotsLogOut'), document.getElementById('mobLogOut')];
+        
+        elsToHide.forEach(el => { if(el) el.style.display = ''; });
+        elsToShow.forEach(el => { if(el) el.style.display = 'none'; });
+    }
+
+    async function handleEmailSignUp() {
+      const fullName = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const confirmPassword = document.getElementById('signup-confirm').value;
+
+      let hasError = false;
+
+      if (!fullName) { shakeField('signup-name'); hasError = true; }
+      if (!email || !email.includes('@')) { shakeField('signup-email'); hasError = true; }
+      if (password.length < 6) { 
+        shakeField('signup-password'); 
+        showInlineError('signup-form-error', 'Password must be at least 6 characters');
+        hasError = true; 
+      }
+      if (password !== confirmPassword) { 
+        shakeField('signup-confirm'); 
+        showInlineError('signup-form-error', 'Passwords do not match');
+        hasError = true; 
+      }
+      if (hasError) return;
+
+      setAuthButtonLoading('signup-btn', true, 'Creating Account...');
+
+      try {
+        const userCredential = await window._firebaseFns.createUserWithEmailAndPassword(window._auth, email, password);
+        const user = userCredential.user;
+
+        await window._firebaseFns.sendEmailVerification(user);
+
+        // UPDATE DISPLAY NAME
+        try {
+            const { updateProfile } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+            await updateProfile(user, { displayName: fullName });
+        } catch(e){}
+
+        // Enforce verification by signing out immediately
+        await window._firebaseFns.signOut(window._auth);
+
+        closeModals();
+        showEmailVerificationDialog(email);
+
+      } catch (error) {
+        setAuthButtonLoading('signup-btn', false, 'Create Account');
+        handleFirebaseError(error, 'signup');
+      }
+    }
+
+    function showEmailVerificationDialog(email) {
+        document.getElementById('verifyEmailTarget').textContent = email;
+        const resendLink = document.getElementById('resendLink');
+        const timer = document.getElementById('resendTimer');
+        resendLink.style.display = 'none';
+        timer.style.display = 'inline';
+        
+        let s = 30;
+        timer.textContent = `Resend in ${s}s...`;
+        
+        // ensure old intervals are cleared
+        if(window.resendInterval) clearInterval(window.resendInterval);
+        
+        window.resendInterval = setInterval(() => {
+           s--;
+           timer.textContent = `Resend in ${s}s...`;
+           if (s <= 0) {
+              clearInterval(window.resendInterval);
+              timer.style.display = 'none';
+              resendLink.style.display = 'inline';
+           }
+        }, 1000);
+        
+        switchModal('verifyEmail');
+    }
+
+    async function resendVerificationEmail() {
+        if (!window._auth.currentUser) return;
+        try {
+           await window._firebaseFns.sendEmailVerification(window._auth.currentUser);
+           showWelcomeToast('Verification email resent!');
+           showEmailVerificationDialog(window._auth.currentUser.email);
+        } catch(e){
+           console.error(e);
+        }
+    }
+
+    async function handleEmailSignIn() {
+      const email = document.getElementById('signin-email').value.trim();
+      const password = document.getElementById('signin-password').value;
+
+      let hasError = false;
+      if (!email || !email.includes('@')) { shakeField('signin-email'); hasError = true; }
+      if (!password || password.length < 1) { shakeField('signin-password'); hasError = true; }
+      if (hasError) return;
+
+      setAuthButtonLoading('signin-btn', true, 'Signing In...');
+
+      try {
+        const userCredential = await window._firebaseFns.signInWithEmailAndPassword(window._auth, email, password);
+        const user = userCredential.user;
+
+        if (!user.emailVerified) {
+          await window._firebaseFns.signOut(window._auth);
+          setAuthButtonLoading('signin-btn', false, 'Sign In');
+          showInlineError('signin-form-error', '⚠️ Please verify your email first. Check your inbox for the verification link.');
+          
+          let resend = document.getElementById('resendVerificationContainerSignIn');
+          if(!resend) {
+              const errEl = document.getElementById('signin-form-error');
+              resend = document.createElement('div');
+              resend.id = 'resendVerificationContainerSignIn';
+              resend.style.marginTop = '10px';
+              resend.style.textAlign = 'center';
+              resend.innerHTML = `<a href="javascript:void(0)" style="font-size: 0.9rem; color: #888; text-decoration: underline;" onclick="resendVerificationEmailByCreds('${email}','${password}')">Resend verification email</a>`;
+              errEl.parentElement.insertBefore(resend, errEl.nextSibling);
+          }
+          return;
+        }
+
+        closeModals();
+        showWelcomeToast('👋 Welcome back, ' + (user.displayName || email.split('@')[0]) + '!');
+        
+        if (pendingAction) {
+           executePendingAction();
+        }
+
+      } catch (error) {
+        setAuthButtonLoading('signin-btn', false, 'Sign In');
+        handleFirebaseError(error, 'signin');
+      }
+    }
+
+    // Workaround since we signed them out and can't use currentUser
+    async function resendVerificationEmailByCreds(email, password) {
+       try {
+           const creds = await window._firebaseFns.signInWithEmailAndPassword(window._auth, email, password);
+           await window._firebaseFns.sendEmailVerification(creds.user);
+           await window._firebaseFns.signOut(window._auth);
+           showWelcomeToast('Verification email resent!');
+       } catch(e) {}
+    }
+
+    function executePendingAction() {
+        const action = pendingAction;
         pendingAction = null;
-        cart = [];
-        updateCartBadge();
-        
-        const avatarDropdown = document.getElementById('avatarDropdown');
-        if (avatarDropdown) avatarDropdown.classList.remove('active');
-        const dotsDropdown = document.getElementById('dotsDropdown');
-        if (dotsDropdown) dotsDropdown.classList.remove('active');
-        
-        updateNavbarAuthUI();
-        showWelcomeToast(`👋 You've been signed out. See you soon!`);
-        
-        if (document.getElementById('orders-page').classList.contains('active-view')) {
-           showLandingPage();
+        if (action.type === 'addToCart') {
+            addToCart(action.payload.id, null);
+        } else if (action.type === 'orderNow') {
+            handleOrderNow(action.payload.id, null);
+        } else if (action.type === 'checkout') {
+            handleCheckout();
         }
     }
 
     async function handleGoogleSignIn() {
-       const btn = document.querySelector('.btn-outline img[alt="Google"]').parentElement;
-       const originalText = btn.innerHTML;
-       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
-       btn.disabled = true;
+      setAuthButtonLoading('google-signin-btn', true, 'Connecting...');
+      
+      try {
+        const result = await window._firebaseFns.signInWithPopup(window._auth, window._googleProvider);
+        const user = result.user;
+        
+        closeModals();
+        showWelcomeToast('👋 Welcome, ' + (user.displayName || user.email.split('@')[0]) + '!');
+        
+        if (pendingAction) {
+          executePendingAction();
+        }
+      } catch (error) {
+        setAuthButtonLoading('google-signin-btn', false, 'Continue with Google');
+        if (error.code === 'auth/popup-closed-by-user') return;
+        handleFirebaseError(error, 'signin');
+      }
+    }
 
-       setTimeout(() => {
-          btn.innerHTML = originalText;
-          btn.disabled = false;
-          
-          isUserSignedIn = true;
-          currentUserEmail = "google.user@example.com";
-          currentUserName = "Google User";
-          
-          closeModals();
-          showWelcomeToast(`👋 Welcome back, ${currentUserName}! You're signed in.`);
-          updateNavbarAuthUI();
-          
-          if (pendingAction) {
-             const action = pendingAction;
-             pendingAction = null;
-             if (action.type === 'addToCart') {
-                 addToCart(action.payload.id, null);
-             } else if (action.type === 'orderNow') {
-                 handleOrderNow(action.payload.id, null);
-             } else if (action.type === 'checkout') {
-                 handleCheckout();
-             }
-          }
-       }, 600);
+    async function handleSignOut() {
+      try {
+        await window._firebaseFns.signOut(window._auth);
+        cart = [];
+        updateCartBadge();
+        pendingAction = null;
+
+        const avatarDropdown = document.getElementById('avatarDropdown');
+        if (avatarDropdown) avatarDropdown.classList.remove('active');
+        const dotsDropdown = document.getElementById('dotsDropdown');
+        if (dotsDropdown) dotsDropdown.classList.remove('active');
+
+        showWelcomeToast('👋 Signed out. See you soon!');
+        
+        if (document.getElementById('orders-page').classList.contains('active-view')) {
+           showLandingPage();
+        }
+      } catch (error) {
+        showWelcomeToast('❌ Sign out failed. Try again.');
+      }
+    }
+
+    function toggleForgotPassword() {
+        const sec = document.getElementById('forgotPwdSection');
+        if (sec.style.display === 'none') {
+            sec.style.display = 'block';
+            hideInlineError('signin-form-error');
+        } else {
+            sec.style.display = 'none';
+        }
+    }
+
+    async function handlePasswordReset() {
+        const email = document.getElementById('reset-email').value.trim();
+        if(!email || !email.includes('@')) {
+            showInlineError('reset-form-error', '⚠️ Please enter a valid email address.');
+            return;
+        }
+
+        const btn = document.getElementById('reset-btn');
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+
+        try {
+            await window._firebaseFns.sendPasswordResetEmail(window._auth, email);
+            showInlineError('reset-form-error', '✅ Reset link sent! Check your inbox.');
+            document.getElementById('reset-form-error').style.color = '#2e7d32';
+            document.getElementById('reset-form-error').style.backgroundColor = '#e6f6eb';
+            document.getElementById('reset-form-error').style.borderColor = '#4ade80';
+        } catch (error) {
+            handleFirebaseError(error, 'signin'); // Will still just show the error via the context
+            showInlineError('reset-form-error', '⚠️ Failed to send reset link.');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Send Reset Link';
+        }
     }
 
     // --- Contact Form ---
