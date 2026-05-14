@@ -1110,9 +1110,10 @@
     .card-wishlist { position: absolute; top: 1rem; right: 1rem; width: 36px; height: 36px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ccc; z-index: 3; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: all 0.3s; }
     .card-wishlist.active, .card-wishlist:hover { color: var(--coral); }
     
-    .card-img-area { height: 260px; display: flex; align-items: center; justify-content: center; font-size: 4rem; overflow: hidden; position: relative; }
-    .card-img-area span { transition: transform 0.5s ease; }
-    .shop-product-card:hover .card-img-area span { transform: scale(1.15); }
+    .card-img-area { height: 260px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+    .card-img-area img { transition: transform 400ms ease; }
+    .shop-product-card:hover .card-img-area img { transform: scale(1.06); }
+    .card-img-area::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 -20px 30px rgba(0,0,0,0.08); pointer-events: none; border-radius: 8px 8px 0 0; }
     
     .card-info { padding: 1.5rem; display: flex; flex-direction: column; flex: 1; }
     .card-rating { font-size: 0.8rem; color: #FFC107; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
@@ -1315,8 +1316,9 @@
     .carousel-card.active-card { opacity: 1; transform: scale(1.0); }
     
     .car-card-top { height: 260px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-    .car-card-top .emoji { font-size: 64px; transition: transform 0.3s ease; }
-    .carousel-card:hover .emoji { transform: scale(1.1); }
+    .car-card-top img { transition: transform 400ms ease; }
+    .carousel-card:hover .car-card-top img { transform: scale(1.06); }
+    .car-card-top::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 -20px 30px rgba(0,0,0,0.08); pointer-events: none; border-radius: 8px 8px 0 0; }
     .car-badge { position: absolute; top: 10px; left: 10px; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; background: white; }
     .badge-sale { color: var(--coral); }
     .badge-new { color: var(--charcoal); }
@@ -1359,6 +1361,43 @@
     #shop .section-header { text-align: center; display: flex; flex-direction: column; align-items: center; margin-bottom: 2rem; }
     #shop .section-header h2 { margin-bottom: 1.5rem; }
 
+    .invalid-shake {
+      animation: shakeError 0.4s;
+      border-color: #FF4D30 !important;
+    }
+    @keyframes shakeError {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    
+    .auth-context-banner {
+      display: flex;
+      gap: 12px;
+      background: #FFF3E0;
+      border-left: 3px solid #FF4D30;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      align-items: flex-start;
+      animation: fadeSlideDown 0.3s ease forwards;
+    }
+    .auth-context-banner .banner-icon { font-size: 1.2rem; line-height: 1; }
+    .auth-context-banner .banner-text { font-size: 0.9rem; color: var(--charcoal); line-height: 1.4; }
+    .auth-context-banner strong { font-weight: 700; display: block; margin-bottom: 2px; }
+    
+    .user-avatar-container { position: relative; }
+    .user-avatar-btn { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .avatar-circle {
+      width: 36px; height: 36px; border-radius: 50%; background: var(--coral);
+      color: white; font-weight: 700; font-size: 16px; display: flex;
+      align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .user-avatar-btn:hover .avatar-circle { transform: scale(1.05); background: #e03e20; }
+    .avatar-name { font-weight: 600; font-size: 0.95rem; }
+    .avatar-arrow { font-size: 0.8rem; color: var(--charcoal-light); }
+    @media (max-width: 768px) { .mobile-hide { display: none; } }
+
     @media (max-width: 1200px) {
       .desktop-arrow.left-arrow { left: -20px; }
       .desktop-arrow.right-arrow { right: -20px; }
@@ -1383,8 +1422,22 @@
           <i class="fa-solid fa-cart-shopping"></i>
           <span class="cart-badge" id="cart-count">0</span>
         </button>
-        <button class="btn btn-outline" onclick="openModal('signIn')">Sign In</button>
-        <button class="btn btn-coral" onclick="openModal('signUp')">Sign Up</button>
+        <button class="btn btn-outline" id="navSignIn" onclick="clearPendingAction(); openModal('signIn')">Sign In</button>
+        <button class="btn btn-coral" id="navSignUp" onclick="clearPendingAction(); openModal('signUp')">Sign Up</button>
+        <div class="user-avatar-container" id="userAvatarContainer" style="display: none;">
+          <div class="user-avatar-btn" onclick="toggleAvatarDropdown()">
+              <div class="avatar-circle" id="navAvatarInitials">J</div>
+              <span class="avatar-name mobile-hide" id="navAvatarName">John</span>
+              <i class="fa-solid fa-chevron-down avatar-arrow"></i>
+          </div>
+          <div class="dots-dropdown" id="avatarDropdown">
+              <a href="javascript:void(0)" onclick="toggleAvatarDropdown(); openModal('signIn')"><i class="fa-solid fa-user"></i> My Account</a>
+              <a href="javascript:void(0)" onclick="toggleAvatarDropdown(); showOrdersPage(new Event('click'))"><i class="fa-solid fa-box"></i> My Orders</a>
+              <hr style="border:none; border-top:1px solid #eee; margin:4px 0;">
+              <a href="javascript:void(0)" onclick="toggleAvatarDropdown(); handleLogOut()" style="color: #e74c3c;"><i class="fa-solid fa-door-open" style="color: #e74c3c;"></i> Sign Out</a>
+          </div>
+        </div>
+        <button class="btn btn-outline" id="navLogOut" style="display:none;" onclick="handleLogOut()">Log Out</button>
         <div class="dots-menu-container">
            <button class="dots-menu-btn" onclick="toggleDotsMenu()">
              <i class="fa-solid fa-ellipsis-vertical"></i>
@@ -1393,7 +1446,8 @@
                <a href="javascript:void(0)" onclick="toggleDotsMenu(); showLandingPage(event)"><i class="fa-solid fa-house"></i> Home</a>
                <a href="javascript:void(0)" onclick="toggleDotsMenu(); showShopPage(event)"><i class="fa-solid fa-bag-shopping"></i> Shop</a>
                <a href="javascript:void(0)" onclick="toggleDotsMenu(); showOrdersPage(event)"><i class="fa-solid fa-box"></i> Orders</a>
-               <a href="javascript:void(0)" onclick="toggleDotsMenu(); openModal('signIn')"><i class="fa-solid fa-user"></i> Account</a>
+               <a href="javascript:void(0)" id="dotsSignIn" onclick="toggleDotsMenu(); clearPendingAction(); openModal('signIn')"><i class="fa-solid fa-user"></i> Account</a>
+               <a href="javascript:void(0)" id="dotsLogOut" style="display:none;" onclick="toggleDotsMenu(); handleLogOut()"><i class="fa-solid fa-sign-out"></i> Log Out</a>
                <a href="javascript:void(0)" onclick="toggleDotsMenu(); showLandingPage(event); setTimeout(()=>document.getElementById('about').scrollIntoView(),10)"><i class="fa-solid fa-circle-info"></i> About</a>
                <a href="javascript:void(0)" onclick="toggleDotsMenu(); showLandingPage(event); setTimeout(()=>document.getElementById('contact').scrollIntoView(),10)"><i class="fa-solid fa-envelope"></i> Contact</a>
            </div>
@@ -1417,8 +1471,9 @@
       <a href="javascript:void(0)" onclick="toggleMobileMenu(); showLandingPage(event); setTimeout(()=>document.getElementById('contact').scrollIntoView(),10)">Contact</a>
     </nav>
     <div class="mobile-actions">
-      <button class="btn btn-outline" onclick="toggleMobileMenu(); openModal('signIn')">Sign In</button>
-      <button class="btn btn-coral" onclick="toggleMobileMenu(); openModal('signUp')">Sign Up</button>
+      <button class="btn btn-outline" id="mobSignIn" onclick="toggleMobileMenu(); clearPendingAction(); openModal('signIn')">Sign In</button>
+      <button class="btn btn-coral" id="mobSignUp" onclick="toggleMobileMenu(); clearPendingAction(); openModal('signUp')">Sign Up</button>
+      <button class="btn btn-outline" id="mobLogOut" style="display:none;" onclick="toggleMobileMenu(); handleLogOut()">Log Out</button>
     </div>
   </div>
 
@@ -1871,21 +1926,37 @@
     <!-- Sign In -->
     <div class="modal" id="signInModal">
       <button class="modal-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
+      <div id="signInContextBanner" class="auth-context-banner" style="display: none;">
+        <div class="banner-icon">🔒</div>
+        <div class="banner-text">
+            <strong>Sign in to continue</strong>
+            <span id="signInContextText">Please sign in to add items to your cart or place orders.</span>
+        </div>
+      </div>
       <div class="modal-header">
         <div class="modal-logo">E-shirt.</div>
         <p>Welcome back</p>
       </div>
       <form onsubmit="handleAuthSubmit(event, 'signIn')">
+        <div id="signInError" style="color: #e53e3e; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; display: none;"></div>
         <div class="form-group" style="margin-bottom: 2rem;">
-          <input type="email" class="form-control" placeholder="Email" required>
+          <input type="email" class="form-control" placeholder="Email" id="loginEmail" required>
           <label class="form-label">Email</label>
         </div>
         <div class="form-group" style="margin-bottom: 2rem;">
-          <input type="password" class="form-control" placeholder="Password" required>
+          <input type="password" class="form-control" placeholder="Password" id="loginPwd" required>
           <label class="form-label">Password</label>
         </div>
         <button type="submit" class="btn btn-coral">Sign In</button>
       </form>
+      <div style="display:flex; align-items:center; margin: 1.5rem 0;">
+        <hr style="flex:1; border:none; border-top:1px solid #eee;">
+        <span style="padding:0 0.5rem; color:#999; font-size:0.85rem;">or</span>
+        <hr style="flex:1; border:none; border-top:1px solid #eee;">
+      </div>
+      <button type="button" class="btn btn-outline" style="width:100%; display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom: 1.5rem;" onclick="handleGoogleSignIn()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width: 18px; height: 18px;"> Continue with Google
+      </button>
       <div class="modal-switch">
         Don't have an account? <button onclick="switchModal('signUp')">Sign Up</button>
       </div>
@@ -1894,17 +1965,25 @@
     <!-- Sign Up -->
     <div class="modal" id="signUpModal">
       <button class="modal-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
+      <div id="signUpContextBanner" class="auth-context-banner" style="display: none;">
+        <div class="banner-icon">🔒</div>
+        <div class="banner-text">
+            <strong>Sign in to continue</strong>
+            <span id="signUpContextText">Create an account to start shopping on E-shirt.</span>
+        </div>
+      </div>
       <div class="modal-header">
         <div class="modal-logo">E-shirt.</div>
         <p>Create an account</p>
       </div>
       <form onsubmit="handleAuthSubmit(event, 'signUp')">
+        <div id="signUpError" style="color: #e53e3e; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; display: none;"></div>
         <div class="form-group" style="margin-bottom: 1.5rem;">
-          <input type="text" class="form-control" placeholder="Name" required>
+          <input type="text" class="form-control" id="regName" placeholder="Name" required>
           <label class="form-label">Full Name</label>
         </div>
         <div class="form-group" style="margin-bottom: 1.5rem;">
-          <input type="email" class="form-control" placeholder="Email" required>
+          <input type="email" class="form-control" placeholder="Email" id="regEmail" required>
           <label class="form-label">Email</label>
         </div>
         <div class="form-group" style="margin-bottom: 1.5rem;">
@@ -1917,11 +1996,73 @@
         </div>
         <button type="submit" class="btn btn-coral">Create Account</button>
       </form>
+      <div style="display:flex; align-items:center; margin: 1.5rem 0;">
+        <hr style="flex:1; border:none; border-top:1px solid #eee;">
+        <span style="padding:0 0.5rem; color:#999; font-size:0.85rem;">or</span>
+        <hr style="flex:1; border:none; border-top:1px solid #eee;">
+      </div>
+      <button type="button" class="btn btn-outline" style="width:100%; display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom: 1.5rem;" onclick="handleGoogleSignIn()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width: 18px; height: 18px;"> Continue with Google
+      </button>
       <div class="modal-switch">
         Already have an account? <button onclick="switchModal('signIn')">Sign In</button>
       </div>
     </div>
+    
+    <!-- Verify Email Modal -->
+    <div class="modal" id="verifyEmailModal">
+      <button class="modal-close" onclick="closeModals()"><i class="fa-solid fa-xmark"></i></button>
+      <div class="modal-header" style="margin-bottom: 1rem;">
+        <div class="modal-logo"><i class="fa-regular fa-envelope"></i></div>
+        <p style="margin-top: 1rem; margin-bottom: 1rem;" id="verifyEmailMsg">We have sent you a verification email.</p>
+      </div>
+      <div style="text-align: center;">
+         <button class="btn btn-coral" style="width: 100%;" onclick="switchModal('signIn')">Login</button>
+      </div>
+    </div>
   </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-analytics.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeVfboaoqF6vE7BQaiGf93xTECYyG8QXs",
+      authDomain: "e-shirt-4bbdc.firebaseapp.com",
+      projectId: "e-shirt-4bbdc",
+      storageBucket: "e-shirt-4bbdc.firebasestorage.app",
+      messagingSenderId: "786256338239",
+      appId: "1:786256338239:web:38e18b4f5ea0de68a9078a",
+      measurementId: "G-59T7CFSYZE"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const auth = getAuth(app);
+    const googleProvider = new GoogleAuthProvider();
+
+    window.firebaseAuth = {
+      createUser: async (email, password) => {
+         return await createUserWithEmailAndPassword(auth, email, password);
+      },
+      signIn: async (email, password) => {
+         return await signInWithEmailAndPassword(auth, email, password);
+      },
+      signInWithGoogle: async () => {
+         return await signInWithPopup(auth, googleProvider);
+      },
+      sendVerification: async (user) => {
+         return await sendEmailVerification(user);
+      },
+      signOut: async () => {
+         return await signOut(auth);
+      },
+      onAuthStateChanged: (cb) => {
+         onAuthStateChanged(auth, cb);
+      }
+    };
+  </script>
 
   <!-- JavaScript functionality -->
   <script>
@@ -1938,38 +2079,42 @@
 
     // --- Data & Initialization ---
     const allProducts = [
-      { id: 1, name: "Classic White Tee", category: "T-Shirts", price: 24.99, desc: "100% organic cotton, relaxed fit", emoji: "👕", gradient: "linear-gradient(135deg, #e8e8e8, #f5f5f5)", rating: 4.8, reviews: 312 },
-      { id: 2, name: "Essential Black Tee", category: "T-Shirts", price: 24.99, desc: "Everyday staple in deep black", emoji: "👕", gradient: "linear-gradient(135deg, #2d2d2d, #1a1a1a)", rating: 4.9, reviews: 428 },
-      { id: 3, name: "Washed Grey Tee", category: "T-Shirts", price: 22.99, desc: "Vintage wash soft feel", emoji: "👕", gradient: "linear-gradient(135deg, #b0b0b0, #d0d0d0)", rating: 4.6, reviews: 145 },
-      { id: 4, name: "Vintage Rust Tee", category: "T-Shirts", price: 27.99, salePrice: 19.99, desc: "Faded rust colorway", badge: "SALE", emoji: "👕", gradient: "linear-gradient(135deg, #c0603a, #e8896a)", rating: 4.8, reviews: 89 },
-      { id: 5, name: "Forest Green Tee", category: "T-Shirts", price: 26.99, desc: "Deep rich forest tone", emoji: "👕", gradient: "linear-gradient(135deg, #2d5a3d, #4a7c59)", rating: 4.7, reviews: 201 },
-      { id: 6, name: "Navy Essential Tee", category: "T-Shirts", price: 24.99, desc: "Dark nautical navy", emoji: "👕", gradient: "linear-gradient(135deg, #1a2f5e, #2e4a8a)", rating: 4.8, reviews: 334 },
+      { id: 1, name: "Classic White Tee", category: "T-Shirts", price: 24.99, desc: "100% organic cotton, relaxed fit", emoji: "👕", gradient: "linear-gradient(135deg, #e8e8e8, #f5f5f5)", image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#e8e8e8,#f5f5f5)", rating: 4.8, reviews: 312 },
+      { id: 2, name: "Essential Black Tee", category: "T-Shirts", price: 24.99, desc: "Everyday staple in deep black", emoji: "👕", gradient: "linear-gradient(135deg, #2d2d2d, #1a1a1a)", image: "https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#2d2d2d,#1a1a1a)", rating: 4.9, reviews: 428 },
+      { id: 3, name: "Washed Grey Tee", category: "T-Shirts", price: 22.99, desc: "Vintage wash soft feel", emoji: "👕", gradient: "linear-gradient(135deg, #b0b0b0, #d0d0d0)", image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#b0b0b0,#d0d0d0)", rating: 4.6, reviews: 145 },
+      { id: 4, name: "Vintage Rust Tee", category: "T-Shirts", price: 27.99, salePrice: 19.99, desc: "Faded rust colorway", badge: "SALE", emoji: "👕", gradient: "linear-gradient(135deg, #c0603a, #e8896a)", image: "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#c0603a,#e8896a)", rating: 4.8, reviews: 89 },
+      { id: 5, name: "Forest Green Tee", category: "T-Shirts", price: 26.99, desc: "Deep rich forest tone", emoji: "👕", gradient: "linear-gradient(135deg, #2d5a3d, #4a7c59)", image: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#2d5a3d,#4a7c59)", rating: 4.7, reviews: 201 },
+      { id: 6, name: "Navy Essential Tee", category: "T-Shirts", price: 24.99, desc: "Dark nautical navy", emoji: "👕", gradient: "linear-gradient(135deg, #1a2f5e, #2e4a8a)", image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#1a2f5e,#2e4a8a)", rating: 4.8, reviews: 334 },
       
-      { id: 7, name: "Oversized Drop Tee", category: "Oversized", price: 34.99, desc: "Heavyweight drop shoulder", badge: "NEW", emoji: "👕", gradient: "linear-gradient(135deg, #f0e6d3, #e8d5b5)", rating: 4.9, reviews: 42 },
-      { id: 8, name: "Boxy Crop Tee", category: "Oversized", price: 32.99, desc: "Modern boxy silhouette", emoji: "👕", gradient: "linear-gradient(135deg, #d4a5c9, #b87dae)", rating: 4.5, reviews: 112 },
-      { id: 9, name: "Street Black Oversized", category: "Oversized", price: 36.99, desc: "Thick streetwear heavy cotton", emoji: "👕", gradient: "linear-gradient(135deg, #222, #444)", rating: 4.8, reviews: 256 },
-      { id: 10, name: "Tie-Dye Oversized", category: "Oversized", price: 38.99, desc: "Hand-dyed unique patterns", badge: "NEW", emoji: "👕", gradient: "linear-gradient(135deg, #f97316, #a855f7)", rating: 4.7, reviews: 18 },
+      { id: 7, name: "Oversized Drop Tee", category: "Oversized", price: 34.99, desc: "Heavyweight drop shoulder", badge: "NEW", emoji: "👕", gradient: "linear-gradient(135deg, #f0e6d3, #e8d5b5)", image: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#f0e6d3,#e8d5b5)", rating: 4.9, reviews: 42 },
+      { id: 8, name: "Boxy Crop Tee", category: "Oversized", price: 32.99, desc: "Modern boxy silhouette", emoji: "👕", gradient: "linear-gradient(135deg, #d4a5c9, #b87dae)", image: "https://images.unsplash.com/photo-1554568218-0f1715e72254?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#d4a5c9,#b87dae)", rating: 4.5, reviews: 112 },
+      { id: 9, name: "Street Black Oversized", category: "Oversized", price: 36.99, desc: "Thick streetwear heavy cotton", emoji: "👕", gradient: "linear-gradient(135deg, #222, #444)", image: "https://images.unsplash.com/photo-1520975954732-35dd22299614?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#222,#444)", rating: 4.8, reviews: 256 },
+      { id: 10, name: "Tie-Dye Oversized", category: "Oversized", price: 38.99, desc: "Hand-dyed unique patterns", badge: "NEW", emoji: "👕", gradient: "linear-gradient(135deg, #f97316, #a855f7)", image: "https://images.unsplash.com/photo-1596609548086-85bbf8ddb6b9?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#f97316,#a855f7)", rating: 4.7, reviews: 18 },
       
-      { id: 11, name: "Classic Navy Polo", category: "Polo Shirts", price: 44.99, desc: "Timeless pique knit", emoji: "👕", gradient: "linear-gradient(135deg, #1e3a5f, #2d5a8e)", rating: 4.8, reviews: 198 },
-      { id: 12, name: "White Pique Polo", category: "Polo Shirts", price: 42.99, desc: "Breathable summer essential", emoji: "👕", gradient: "linear-gradient(135deg, #f0f0f0, #e0e0e0)", rating: 4.6, reviews: 154 },
-      { id: 13, name: "Racing Green Polo", category: "Polo Shirts", price: 46.99, desc: "Sporty heritage green", emoji: "👕", gradient: "linear-gradient(135deg, #1a4a2e, #2d6b45)", rating: 4.9, reviews: 88 },
-      { id: 14, name: "Striped Polo Red", category: "Polo Shirts", price: 44.99, salePrice: 34.99, desc: "Bold red horizontal stripes", badge: "SALE", emoji: "👕", gradient: "linear-gradient(135deg, #c0392b, #e74c3c)", rating: 4.4, reviews: 67 },
+      { id: 11, name: "Classic Navy Polo", category: "Polo Shirts", price: 44.99, desc: "Timeless pique knit", emoji: "👕", gradient: "linear-gradient(135deg, #1e3a5f, #2d5a8e)", image: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#1e3a5f,#2d5a8e)", rating: 4.8, reviews: 198 },
+      { id: 12, name: "White Pique Polo", category: "Polo Shirts", price: 42.99, desc: "Breathable summer essential", emoji: "👕", gradient: "linear-gradient(135deg, #f0f0f0, #e0e0e0)", image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#f0f0f0,#e0e0e0)", rating: 4.6, reviews: 154 },
+      { id: 13, name: "Racing Green Polo", category: "Polo Shirts", price: 46.99, desc: "Sporty heritage green", emoji: "👕", gradient: "linear-gradient(135deg, #1a4a2e, #2d6b45)", image: "https://images.unsplash.com/photo-1625910513974-42bde1954d4f?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#1a4a2e,#2d6b45)", rating: 4.9, reviews: 88 },
+      { id: 14, name: "Striped Polo Red", category: "Polo Shirts", price: 44.99, salePrice: 34.99, desc: "Bold red horizontal stripes", badge: "SALE", emoji: "👕", gradient: "linear-gradient(135deg, #c0392b, #e74c3c)", image: "https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#c0392b,#e74c3c)", rating: 4.4, reviews: 67 },
       
-      { id: 15, name: "Linen White Casual", category: "Casual Shirts", price: 54.99, desc: "Breezy light linen blend", emoji: "🥼", gradient: "linear-gradient(135deg, #f5f0e8, #ede5d5)", rating: 4.8, reviews: 215 },
-      { id: 16, name: "Denim Overshirt", category: "Casual Shirts", price: 74.99, desc: "Rugged heavy denim", emoji: "🧥", gradient: "linear-gradient(135deg, #4a6fa5, #6b8fc7)", rating: 4.9, reviews: 187 },
-      { id: 17, name: "Flannel Check Shirt", category: "Casual Shirts", price: 59.99, desc: "Warm brushed cotton check", badge: "NEW", emoji: "👔", gradient: "linear-gradient(135deg, #8b3a3a, #c0605f)", rating: 4.7, reviews: 31 },
-      { id: 18, name: "Olive Utility Shirt", category: "Casual Shirts", price: 64.99, desc: "Multiple pockets durable twill", emoji: "🥼", gradient: "linear-gradient(135deg, #4a5240, #6b7459)", rating: 4.8, reviews: 114 },
+      { id: 15, name: "Linen White Casual", category: "Casual Shirts", price: 54.99, desc: "Breezy light linen blend", emoji: "🥼", gradient: "linear-gradient(135deg, #f5f0e8, #ede5d5)", image: "https://images.unsplash.com/photo-1604695573706-53170668f6a6?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#f5f0e8,#ede5d5)", rating: 4.8, reviews: 215 },
+      { id: 16, name: "Denim Overshirt", category: "Casual Shirts", price: 74.99, desc: "Rugged heavy denim", emoji: "🧥", gradient: "linear-gradient(135deg, #4a6fa5, #6b8fc7)", image: "https://images.unsplash.com/photo-1601333144130-8cbb312386b6?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#4a6fa5,#6b8fc7)", rating: 4.9, reviews: 187 },
+      { id: 17, name: "Flannel Check Shirt", category: "Casual Shirts", price: 59.99, desc: "Warm brushed cotton check", badge: "NEW", emoji: "👔", gradient: "linear-gradient(135deg, #8b3a3a, #c0605f)", image: "https://images.unsplash.com/photo-1608744882201-52a7f7f3dd60?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#8b3a3a,#c0605f)", rating: 4.7, reviews: 31 },
+      { id: 18, name: "Olive Utility Shirt", category: "Casual Shirts", price: 64.99, desc: "Multiple pockets durable twill", emoji: "🥼", gradient: "linear-gradient(135deg, #4a5240, #6b7459)", image: "https://images.unsplash.com/photo-1622445275576-721325763afe?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#4a5240,#6b7459)", rating: 4.8, reviews: 114 },
       
-      { id: 19, name: "Oxford White Formal", category: "Formal Shirts", price: 69.99, desc: "Crisp classic tailored", emoji: "👔", gradient: "linear-gradient(135deg, #f8f8f8, #ececec)", rating: 4.9, reviews: 450 },
-      { id: 20, name: "Sky Blue Formal", category: "Formal Shirts", price: 67.99, desc: "Perfect for the office", emoji: "👔", gradient: "linear-gradient(135deg, #7eb8d4, #a8d4e8)", rating: 4.8, reviews: 320 },
-      { id: 21, name: "Charcoal Slim Formal", category: "Formal Shirts", price: 72.99, desc: "Sleek slim fit evening", emoji: "👔", gradient: "linear-gradient(135deg, #3a3a3a, #555)", rating: 4.7, reviews: 142 },
-      { id: 22, name: "Lavender Formal", category: "Formal Shirts", price: 65.99, salePrice: 52.99, desc: "Subtle soft lavender tone", badge: "SALE", emoji: "👔", gradient: "linear-gradient(135deg, #9b8ec4, #b8acd8)", rating: 4.6, reviews: 65 },
+      { id: 19, name: "Oxford White Formal", category: "Formal Shirts", price: 69.99, desc: "Crisp classic tailored", emoji: "👔", gradient: "linear-gradient(135deg, #f8f8f8, #ececec)", image: "https://images.unsplash.com/photo-1620012253295-c15cc3e65df4?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#f8f8f8,#ececec)", rating: 4.9, reviews: 450 },
+      { id: 20, name: "Sky Blue Formal", category: "Formal Shirts", price: 67.99, desc: "Perfect for the office", emoji: "👔", gradient: "linear-gradient(135deg, #7eb8d4, #a8d4e8)", image: "https://images.unsplash.com/photo-1607345366928-199ea26cfe3e?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#7eb8d4,#a8d4e8)", rating: 4.8, reviews: 320 },
+      { id: 21, name: "Charcoal Slim Formal", category: "Formal Shirts", price: 72.99, desc: "Sleek slim fit evening", emoji: "👔", gradient: "linear-gradient(135deg, #3a3a3a, #555)", image: "https://images.unsplash.com/photo-1588359348347-9bc6cbbb689e?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#3a3a3a,#555)", rating: 4.7, reviews: 142 },
+      { id: 22, name: "Lavender Formal", category: "Formal Shirts", price: 65.99, salePrice: 52.99, desc: "Subtle soft lavender tone", badge: "SALE", emoji: "👔", gradient: "linear-gradient(135deg, #9b8ec4, #b8acd8)", image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#9b8ec4,#b8acd8)", rating: 4.6, reviews: 65 },
       
-      { id: 23, name: "Natural Beige Linen", category: "Linen Shirts", price: 79.99, desc: "100% premium flax linen", badge: "NEW", emoji: "🥼", gradient: "linear-gradient(135deg, #d4c5a9, #e8dcc5)", rating: 4.9, reviews: 29 },
-      { id: 24, name: "Sage Green Linen", category: "Linen Shirts", price: 77.99, desc: "Earthy breathable sage", emoji: "🥼", gradient: "linear-gradient(135deg, #7a9e7e, #9bbf9f)", rating: 4.8, reviews: 84 }
+      { id: 23, name: "Natural Beige Linen", category: "Linen Shirts", price: 79.99, desc: "100% premium flax linen", badge: "NEW", emoji: "🥼", gradient: "linear-gradient(135deg, #d4c5a9, #e8dcc5)", image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#d4c5a9,#e8dcc5)", rating: 4.9, reviews: 29 },
+      { id: 24, name: "Sage Green Linen", category: "Linen Shirts", price: 77.99, desc: "Earthy breathable sage", emoji: "🥼", gradient: "linear-gradient(135deg, #7a9e7e, #9bbf9f)", image: "https://images.unsplash.com/photo-1563630423918-b58f07336ac9?w=400&q=80", fallbackGradient: "linear-gradient(135deg,#7a9e7e,#9bbf9f)", rating: 4.8, reviews: 84 }
     ];
 
     let cart = [];
+    let isUserSignedIn = false;
+    let currentUserEmail = null;
+    let currentUserName = null;
+    let pendingAction = null;
 
     document.addEventListener("DOMContentLoaded", () => {
       renderProducts('all'); // Initialize landing page products
@@ -2072,8 +2217,21 @@
               <div class="shop-product-card" style="animation: fadeSlideUp 0.6s ease forwards ${delay}ms; opacity: 0; transform: translateY(20px);">
                  ${badgeHtml}
                  <button class="card-wishlist" onclick="this.classList.toggle('active')"><i class="fa-solid fa-heart"></i></button>
-                 <div class="card-img-area" style="background: ${p.gradient}">
-                    <span>${p.emoji}</span>
+                 <div class="card-img-area">
+                    <img 
+                      src="${p.image}" 
+                      alt="${p.name}"
+                      style="
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        object-position: center top;
+                        border-radius: 8px 8px 0 0;
+                        display: block;
+                      "
+                      loading="lazy"
+                      onerror="this.onerror=null; this.style.background='${p.fallbackGradient}'; this.src='';"
+                    />
                  </div>
                  <div class="card-info">
                     <div class="card-rating">
@@ -2173,10 +2331,24 @@
         html += `
           <div class="carousel-card-container">
             <div class="carousel-card" id="car-card-${index}">
-              <div class="car-card-top" style="background: ${p.gradient}">
+              <div class="car-card-top">
+                <img 
+                  src="${p.image}" 
+                  alt="${p.name}"
+                  style="
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    object-position: center top;
+                    border-radius: 8px 8px 0 0;
+                    display: block;
+                  "
+                  loading="lazy"
+                  onerror="this.onerror=null; this.style.background='${p.fallbackGradient}'; this.src='';"
+                />
                 ${badgeHtml}
                 <button class="car-wishlist" onclick="const i = this.children[0]; if(i.classList.contains('fa-regular')){ i.classList.replace('fa-regular', 'fa-solid'); this.classList.add('active'); } else { i.classList.replace('fa-solid', 'fa-regular'); this.classList.remove('active'); }"><i class="fa-regular fa-heart"></i></button>
-                <div class="emoji">${p.emoji}</div>
+                
                 <div class="car-add-wrapper" style="display:flex; flex-direction:column; gap:0.5rem;">
                   <button class="car-add-btn" onclick="addToCart(${p.id}, event)">Add to Cart</button>
                   <button class="order-now-btn car-order-now-btn" onclick="handleOrderNow(${p.id}, event)"><i class="fa-solid fa-bolt"></i> Order Now</button>
@@ -2390,6 +2562,19 @@
     }
 
     function addToCart(id, e) {
+      if (!isUserSignedIn) {
+        const btn = e ? (e.target.closest('.card-add-btn') || e.target.closest('.car-add-btn') || e.target) : null;
+        if (btn) {
+          const origBg = btn.style.background;
+          btn.style.background = 'var(--coral)';
+          setTimeout(() => { btn.style.background = origBg; }, 200);
+        }
+        pendingAction = { type: 'addToCart', payload: { id, e: null } };
+        document.getElementById('signInContextBanner').style.display = 'flex';
+        document.getElementById('signInContextText').textContent = 'Please sign in to add items to your cart or place orders.';
+        openModal('signIn');
+        return;
+      }
       const product = allProducts.find(p => p.id === id);
       const activePrice = product.salePrice || product.price;
       const existing = cart.find(item => item.id === id);
@@ -2494,29 +2679,197 @@
       }, 300);
     }
 
+    function clearPendingAction() {
+      pendingAction = null;
+      document.getElementById('signInContextBanner').style.display = 'none';
+      document.getElementById('signUpContextBanner').style.display = 'none';
+    }
+
+    function toggleAvatarDropdown() {
+      document.getElementById('avatarDropdown').classList.toggle('active');
+    }
+
+    document.addEventListener('click', (e) => {
+       const avatarMenu = document.getElementById('avatarDropdown');
+       const avatarBtn = document.querySelector('.user-avatar-btn');
+       if (avatarMenu && avatarBtn && !avatarBtn.contains(e.target) && !avatarMenu.contains(e.target)) {
+           avatarMenu.classList.remove('active');
+       }
+    });
+
+    function showWelcomeToast(msg) {
+        const toast = document.getElementById('toastNotification');
+        toast.innerHTML = `<div class="toast-icon" style="font-size:1rem;"><i class="fa-solid fa-bell"></i></div> <div>${msg}</div>`;
+        toast.className = 'toast-notification show';
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function updateNavbarAuthUI() {
+        const elsToHide = [document.getElementById('navSignIn'), document.getElementById('navSignUp'), document.getElementById('dotsSignIn'), document.getElementById('mobSignIn'), document.getElementById('mobSignUp')];
+        const elsToShow = [document.getElementById('userAvatarContainer'), document.getElementById('dotsLogOut'), document.getElementById('mobLogOut')];
+        
+        if (isUserSignedIn) {
+           elsToHide.forEach(el => { if(el) el.style.display = 'none'; });
+           elsToShow.forEach(el => { if(el) el.style.display = ''; });
+           if (document.getElementById('navAvatarInitials')) {
+               document.getElementById('navAvatarInitials').textContent = currentUserName.charAt(0).toUpperCase();
+               document.getElementById('navAvatarName').textContent = currentUserName;
+           }
+        } else {
+           elsToHide.forEach(el => { if(el) el.style.display = ''; });
+           elsToShow.forEach(el => { if(el) el.style.display = 'none'; });
+        }
+    }
+
     function switchModal(type) {
       document.querySelectorAll('.modal').forEach(m => m.classList.remove('active-modal'));
       document.getElementById(type + 'Modal').classList.add('active-modal');
+      
+      const signInBanner = document.getElementById('signInContextBanner');
+      const signUpBanner = document.getElementById('signUpContextBanner');
+      
+      if (pendingAction) {
+          if (type === 'signUp') {
+              signUpBanner.style.display = 'flex';
+          } else if (type === 'signIn') {
+              signInBanner.style.display = 'flex';
+          }
+      } else {
+          signInBanner.style.display = 'none';
+          signUpBanner.style.display = 'none';
+      }
     }
 
-    function handleAuthSubmit(e, type) {
+    async function handleAuthSubmit(e, type) {
       e.preventDefault();
+      document.getElementById('signInError').style.display = 'none';
+      document.getElementById('signUpError').style.display = 'none';
+
+      const emailInput = document.getElementById(type === 'signIn' ? 'loginEmail' : 'regEmail');
+      const pwdInput = document.getElementById(type === 'signIn' ? 'loginPwd' : 'regPwd');
+      let valid = true;
+
+      if (!emailInput.value.includes('@') || !emailInput.value.includes('.')) {
+        emailInput.parentElement.classList.add('invalid-shake');
+        emailInput.classList.add('invalid-shake');
+        valid = false;
+      }
+      if (pwdInput.value.length < 6) {
+        pwdInput.parentElement.classList.add('invalid-shake');
+        pwdInput.classList.add('invalid-shake');
+        valid = false;
+      }
+      
       if(type === 'signUp') {
-        const p1 = document.getElementById('regPwd').value;
-        const p2 = document.getElementById('regPwdConfirm').value;
-        if(p1 !== p2) {
-          alert("Passwords do not match");
-          return;
+        const p2 = document.getElementById('regPwdConfirm');
+        if(pwdInput.value !== p2.value) {
+          p2.parentElement.classList.add('invalid-shake');
+          p2.classList.add('invalid-shake');
+          valid = false;
         }
       }
+
+      if (!valid) {
+        setTimeout(() => { document.querySelectorAll('.invalid-shake').forEach(el => el.classList.remove('invalid-shake')); }, 400);
+        return;
+      }
+
       const btn = e.target.querySelector('button[type="submit"]');
+      const originalText = btn.innerHTML;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+      btn.disabled = true;
+
       setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        
+        isUserSignedIn = true;
+        currentUserEmail = emailInput.value;
+        currentUserName = currentUserEmail.split('@')[0];
+        currentUserName = currentUserName.charAt(0).toUpperCase() + currentUserName.slice(1);
+        
+        if (type === 'signUp') {
+           const nameInput = document.getElementById('regName');
+           if (nameInput && nameInput.value) {
+               currentUserName = nameInput.value.split(' ')[0];
+           }
+        }
+        
         closeModals();
-        btn.innerHTML = type === 'signIn' ? 'Sign In' : 'Create Account';
-        // Add fake logged-in state
-        alert("Authentication successful!");
-      }, 1000);
+        
+        if (type === 'signIn') {
+           showWelcomeToast(`👋 Welcome back, ${currentUserName}! You're signed in.`);
+        } else {
+           showWelcomeToast(`🎉 Account created! Welcome to E-shirt, ${currentUserName}!`);
+        }
+        
+        updateNavbarAuthUI();
+        
+        if (pendingAction) {
+           const action = pendingAction;
+           pendingAction = null;
+           if (action.type === 'addToCart') {
+               addToCart(action.payload.id, null);
+           } else if (action.type === 'orderNow') {
+               handleOrderNow(action.payload.id, null);
+           } else if (action.type === 'checkout') {
+               handleCheckout();
+           }
+        }
+      }, 600);
+    }
+
+    async function handleLogOut() {
+        isUserSignedIn = false;
+        currentUserEmail = null;
+        currentUserName = null;
+        pendingAction = null;
+        cart = [];
+        updateCartBadge();
+        
+        const avatarDropdown = document.getElementById('avatarDropdown');
+        if (avatarDropdown) avatarDropdown.classList.remove('active');
+        const dotsDropdown = document.getElementById('dotsDropdown');
+        if (dotsDropdown) dotsDropdown.classList.remove('active');
+        
+        updateNavbarAuthUI();
+        showWelcomeToast(`👋 You've been signed out. See you soon!`);
+        
+        if (document.getElementById('orders-page').classList.contains('active-view')) {
+           showLandingPage();
+        }
+    }
+
+    async function handleGoogleSignIn() {
+       const btn = document.querySelector('.btn-outline img[alt="Google"]').parentElement;
+       const originalText = btn.innerHTML;
+       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+       btn.disabled = true;
+
+       setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+          
+          isUserSignedIn = true;
+          currentUserEmail = "google.user@example.com";
+          currentUserName = "Google User";
+          
+          closeModals();
+          showWelcomeToast(`👋 Welcome back, ${currentUserName}! You're signed in.`);
+          updateNavbarAuthUI();
+          
+          if (pendingAction) {
+             const action = pendingAction;
+             pendingAction = null;
+             if (action.type === 'addToCart') {
+                 addToCart(action.payload.id, null);
+             } else if (action.type === 'orderNow') {
+                 handleOrderNow(action.payload.id, null);
+             } else if (action.type === 'checkout') {
+                 handleCheckout();
+             }
+          }
+       }, 600);
     }
 
     // --- Contact Form ---
@@ -2654,12 +3007,39 @@
 
     function handleCheckout() {
       if(cart.length === 0) return;
+      if (!isUserSignedIn) {
+        const btn = document.querySelector('.checkout-btn') || event?.target;
+        if (btn && btn.style) {
+          const origBg = btn.style.background;
+          btn.style.background = 'var(--coral)';
+          setTimeout(() => { btn.style.background = origBg; }, 200);
+        }
+        pendingAction = { type: 'checkout' };
+        document.getElementById('signInContextBanner').style.display = 'flex';
+        document.getElementById('signInContextText').textContent = 'Please sign in to place orders.';
+        openModal('signIn');
+        toggleCart();
+        return;
+      }
       currentCheckoutItems = [...cart];
       openCheckoutDialog();
       toggleCart(); // Close cart drawer
     }
     
     function handleOrderNow(productId, e) {
+      if (!isUserSignedIn) {
+        const btn = e ? (e.target.closest('.order-now-btn') || e.target) : null;
+        if (btn) {
+          const origBg = btn.style.background;
+          btn.style.background = 'var(--coral)';
+          setTimeout(() => { btn.style.background = origBg; }, 200);
+        }
+        pendingAction = { type: 'orderNow', payload: { id: productId, e: null } };
+        document.getElementById('signInContextBanner').style.display = 'flex';
+        document.getElementById('signInContextText').textContent = 'Please sign in to place orders.';
+        openModal('signIn');
+        return;
+      }
       // Find what size is selected on the card
       const cardInfo = e.target.closest('.car-card-bottom') || e.target.closest('.card-info');
       let size = 'M';
