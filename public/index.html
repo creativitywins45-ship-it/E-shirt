@@ -34,6 +34,8 @@
       createUserWithEmailAndPassword,
       signInWithEmailAndPassword,
       signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
       GoogleAuthProvider,
       sendEmailVerification,
       sendPasswordResetEmail,
@@ -43,6 +45,13 @@
       "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     // ── FIREBASE CONFIG ──────────────────────────────
+    // ACTION REQUIRED: Go to Firebase Console →
+    // Authentication → Settings → Authorized Domains
+    // → Add Domain → add BOTH of these exactly:
+    // • e-shirt.vercel.app
+    // • localhost
+    // Without this, ALL sign in methods will fail.
+    
     // The developer must replace these placeholder values
     // with their actual Firebase project config from:
     // Firebase Console → Project Settings → Your Apps → SDK setup
@@ -67,6 +76,8 @@
       createUserWithEmailAndPassword,
       signInWithEmailAndPassword,
       signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
       sendEmailVerification,
       sendPasswordResetEmail,
       signOut,
@@ -3128,6 +3139,10 @@
         'auth/popup-blocked': '⚠️ Popup was blocked by your browser. Please allow popups for this site.',
         'auth/cancelled-popup-request': '⚠️ Sign in was cancelled.',
         'auth/user-disabled': '⚠️ This account has been disabled.',
+        'auth/unauthorized-domain': '⚠️ This domain is not authorized in Firebase. Add e-shirt.vercel.app to Firebase Console → Authentication → Authorized Domains.',
+        'auth/operation-not-allowed': '⚠️ This sign in method is not enabled. Enable it in Firebase Console → Authentication → Sign-in Providers.',
+        'auth/configuration-not-found': '⚠️ Firebase is not configured correctly. Check your firebaseConfig values.',
+        'auth/invalid-api-key': '⚠️ Invalid Firebase API key. Check your firebaseConfig.',
       };
 
       const msg = messages[error.code] || '⚠️ Something went wrong. Please try again.';
@@ -3178,6 +3193,18 @@
     }
 
     waitForFirebase(() => {
+      window._firebaseFns.getRedirectResult(window._auth)
+        .then((result) => {
+          if (result && result.user) {
+            handleGoogleSuccess(result.user);
+          }
+        })
+        .catch((error) => {
+          if (error.code !== 'auth/no-current-user') {
+            handleFirebaseError(error, 'google');
+          }
+        });
+
       window._firebaseFns.onAuthStateChanged(
         window._auth, 
         (user) => {
@@ -3381,23 +3408,38 @@
         }
     }
 
+    function handleGoogleSuccess(user) {
+      closeModals();
+      showWelcomeToast('👋 Welcome, ' + 
+        (user.displayName || 
+         user.email.split('@')[0]) + '!');
+      if (pendingAction) {
+        executePendingAction();
+      }
+    }
+
     async function handleGoogleSignIn() {
       setAuthButtonLoading('google-signin-btn', true, 'Connecting...');
       
       try {
-        const result = await window._firebaseFns.signInWithPopup(window._auth, window._googleProvider);
-        const user = result.user;
+        const isMobile = window.innerWidth < 768 || 
+          /Android|iPhone|iPad/i.test(navigator.userAgent);
         
-        closeModals();
-        showWelcomeToast('👋 Welcome, ' + (user.displayName || user.email.split('@')[0]) + '!');
-        
-        if (pendingAction) {
-          executePendingAction();
+        if (isMobile) {
+          await window._firebaseFns.signInWithRedirect(
+            window._auth, window._googleProvider);
+        } else {
+          const result = await 
+            window._firebaseFns.signInWithPopup(
+              window._auth, window._googleProvider);
+          handleGoogleSuccess(result.user);
         }
       } catch (error) {
         setAuthButtonLoading('google-signin-btn', false, 'Continue with Google');
-        if (error.code === 'auth/popup-closed-by-user') return;
-        handleFirebaseError(error, 'signin');
+        if (error.code !== 'auth/popup-closed-by-user' &&
+            error.code !== 'auth/cancelled-popup-request') {
+          handleFirebaseError(error, 'google');
+        }
       }
     }
 
