@@ -3259,6 +3259,14 @@
           >
             Sign Up
           </button>
+          <button
+            class="btn btn-outline"
+            id="navLogOut"
+            style="display: none"
+            onclick="handleSignOut()"
+          >
+            Log Out
+          </button>
           <div
             class="user-avatar-container"
             id="userAvatarContainer"
@@ -3362,6 +3370,16 @@
                   openModal('signIn');
                 "
                 ><i class="fa-solid fa-user"></i> Account</a
+              >
+              <a
+                href="javascript:void(0)"
+                id="dotsLogOut"
+                style="display: none"
+                onclick="
+                  toggleDotsMenu();
+                  handleSignOut();
+                "
+                ><i class="fa-solid fa-door-open"></i> Log Out</a
               >
               <a
                 href="javascript:void(0)"
@@ -3478,6 +3496,17 @@
           "
         >
           Sign Up
+        </button>
+        <button
+          class="btn btn-outline"
+          id="mobLogOut"
+          style="display: none"
+          onclick="
+            toggleMobileMenu();
+            handleSignOut();
+          "
+        >
+          Log Out
         </button>
       </div>
     </div>
@@ -4928,6 +4957,7 @@
     <!-- JavaScript functionality -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
       import {
         getAuth,
         createUserWithEmailAndPassword,
@@ -4944,16 +4974,17 @@
       } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
       const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_AUTH_DOMAIN",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_STORAGE_BUCKET",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID",
-        measurementId: "YOUR_MEASUREMENT_ID",
+        apiKey: "AIzaSyCeVfboaoqF6vE7BQaiGf93xTECYyG8QXs",
+        authDomain: "e-shirt-4bbdc.firebaseapp.com",
+        projectId: "e-shirt-4bbdc",
+        storageBucket: "e-shirt-4bbdc.firebasestorage.app",
+        messagingSenderId: "786256338239",
+        appId: "1:786256338239:web:38e18b4f5ea0de68a9078a",
+        measurementId: "G-59T7CFSYZE",
       };
 
       const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
       const auth = getAuth(app);
       const googleProvider = new GoogleAuthProvider();
 
@@ -6374,8 +6405,13 @@
           document.getElementById("dotsSignIn"),
           document.getElementById("mobSignIn"),
           document.getElementById("mobSignUp"),
+          document.getElementById("userAvatarContainer"),
         ];
-        const elsToShow = [document.getElementById("userAvatarContainer")];
+        const elsToShow = [
+          document.getElementById("navLogOut"),
+          document.getElementById("mobLogOut"),
+          document.getElementById("dotsLogOut"),
+        ];
 
         elsToHide.forEach((el) => {
           if (el) el.style.display = "none";
@@ -6404,20 +6440,25 @@
       }
 
       function updateNavbarToSignedOut() {
-        const elsToHide = [
+        const elsToShow = [
           document.getElementById("navSignIn"),
           document.getElementById("navSignUp"),
           document.getElementById("dotsSignIn"),
           document.getElementById("mobSignIn"),
           document.getElementById("mobSignUp"),
         ];
-        const elsToShow = [document.getElementById("userAvatarContainer")];
+        const elsToHide = [
+          document.getElementById("userAvatarContainer"),
+          document.getElementById("navLogOut"),
+          document.getElementById("mobLogOut"),
+          document.getElementById("dotsLogOut"),
+        ];
 
         elsToHide.forEach((el) => {
-          if (el) el.style.display = "";
+          if (el) el.style.display = "none";
         });
         elsToShow.forEach((el) => {
-          if (el) el.style.display = "none";
+          if (el) el.style.display = "";
         });
       }
 
