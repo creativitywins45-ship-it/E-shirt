@@ -6100,7 +6100,7 @@
       }
 
       function addToCart(id, e) {
-        if (!isUserSignedIn) {
+        if (!auth.currentUser) {
           const btn = e
             ? e.target.closest(".card-add-btn") ||
               e.target.closest(".car-add-btn") ||
@@ -6607,6 +6607,7 @@
           }
 
           closeModals();
+          isUserSignedIn = true;
           showWelcomeToast(
             "👋 Welcome back, " +
               (user.displayName || email.split("@")[0]) +
@@ -6644,6 +6645,7 @@
       }
 
       function handleGoogleSuccess(user) {
+        isUserSignedIn = true;
         closeModals();
         showWelcomeToast(
           "👋 Welcome, " + (user.displayName || user.email.split("@")[0]) + "!",
@@ -6916,7 +6918,7 @@
 
       function handleCheckout() {
         if (cart.length === 0) return;
-        if (!isUserSignedIn) {
+        if (!auth.currentUser) {
           const btn = document.querySelector(".checkout-btn") || event?.target;
           if (btn && btn.style) {
             const origBg = btn.style.background;
@@ -6939,7 +6941,7 @@
       }
 
       function handleOrderNow(productId, e) {
-        if (!isUserSignedIn) {
+        if (!auth.currentUser) {
           const btn = e ? e.target.closest(".order-now-btn") || e.target : null;
           if (btn) {
             const origBg = btn.style.background;
