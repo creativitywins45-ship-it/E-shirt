@@ -4958,8 +4958,7 @@
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
       import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
-      import {
-        getAuth,
+      import { getAuth,
         createUserWithEmailAndPassword,
         signInWithEmailAndPassword,
         signInWithPopup,
@@ -4972,6 +4971,7 @@
         onAuthStateChanged,
         updateProfile,
       } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+      import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyCeVfboaoqF6vE7BQaiGf93xTECYyG8QXs",
@@ -4986,6 +4986,7 @@
       const app = initializeApp(firebaseConfig);
       const analytics = getAnalytics(app);
       const auth = getAuth(app);
+      const db = getFirestore(app);
       const googleProvider = new GoogleAuthProvider();
 
       history.scrollRestoration = "manual";
@@ -6382,7 +6383,7 @@
           }
         });
 
-      onAuthStateChanged(auth, (user) => {
+      onAuthStateChanged(auth, async (user) => {
         if (user) {
           isUserSignedIn = true;
           currentUserEmail = user.email;
@@ -6390,6 +6391,21 @@
           currentUserName =
             currentUserName.charAt(0).toUpperCase() + currentUserName.slice(1);
           updateNavbarToSignedIn(user);
+          
+          try {
+            const userRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userRef);
+            if (!userSnap.exists()) {
+              await setDoc(userRef, {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName || currentUserName,
+                createdAt: new Date().toISOString()
+              }, { merge: true });
+            }
+          } catch (e) {
+            console.error("Error storing user data:", e);
+          }
         } else {
           isUserSignedIn = false;
           currentUserEmail = null;
@@ -6405,9 +6421,9 @@
           document.getElementById("dotsSignIn"),
           document.getElementById("mobSignIn"),
           document.getElementById("mobSignUp"),
-          document.getElementById("userAvatarContainer"),
         ];
         const elsToShow = [
+          document.getElementById("userAvatarContainer"),
           document.getElementById("navLogOut"),
           document.getElementById("mobLogOut"),
           document.getElementById("dotsLogOut"),
@@ -6419,6 +6435,16 @@
         elsToShow.forEach((el) => {
           if (el) el.style.display = "";
         });
+
+        // Update hero section for welcome page feel
+        const heroTitle = document.querySelector("#main-landing .hero-content h1");
+        const heroSubtitle = document.querySelector("#main-landing .hero-content p");
+        if (heroTitle) {
+          heroTitle.innerHTML = `Welcome back,<br /><span class="highlight">${currentUserName}</span>`;
+        }
+        if (heroSubtitle) {
+          heroSubtitle.textContent = "Ready to elevate your everyday selection? Start shopping newly arrived premium shirts & tees.";
+        }
 
         const avatarCircle = document.getElementById("navAvatarInitials");
         if (avatarCircle) {
@@ -6460,6 +6486,16 @@
         elsToShow.forEach((el) => {
           if (el) el.style.display = "";
         });
+
+        // Reset hero section
+        const heroTitle = document.querySelector("#main-landing .hero-content h1");
+        const heroSubtitle = document.querySelector("#main-landing .hero-content p");
+        if (heroTitle) {
+          heroTitle.innerHTML = `Wear What<br /><span class="highlight">Defines You.</span>`;
+        }
+        if (heroSubtitle) {
+          heroSubtitle.textContent = "Premium shirts & tees crafted for modern living. Elevate your everyday style effortlessly.";
+        }
       }
 
       async function handleEmailSignUp() {
