@@ -5980,10 +5980,10 @@
                     </div>
                     ${
                       cart.some((item) => item.id === p.id) 
-                      ? `<button class="card-add-btn add-to-cart-btn added" data-product-id="${p.id}" onclick="addToCartAction(${p.id})">✓ Added</button>`
-                      : `<button class="card-add-btn add-to-cart-btn" data-product-id="${p.id}" onclick="addToCartAction(${p.id})">🛒 Add to Cart</button>`
+                      ? `<button class="card-add-btn add-to-cart-btn added" data-product-id="${p.id}" onclick="addToCart(${p.id}, event)">✓ Added</button>`
+                      : `<button class="card-add-btn add-to-cart-btn" data-product-id="${p.id}" onclick="addToCart(${p.id}, event)">🛒 Add to Cart</button>`
                     }
-                    <button class="order-now-btn card-order-now-btn" onclick="orderNowAction(${p.id})"><i class="fa-solid fa-bolt"></i> Order Now</button>
+                    <button class="order-now-btn card-order-now-btn" onclick="handleOrderNow(${p.id}, event)"><i class="fa-solid fa-bolt"></i> Order Now</button>
                  </div>
               </div>
            `;
@@ -6114,10 +6114,10 @@
                 <div class="car-add-wrapper" style="display:flex; flex-direction:column; gap:0.5rem;">
                   ${
                     cart.some((item) => item.id === p.id) 
-                    ? `<button class="car-add-btn add-to-cart-btn added" data-product-id="${p.id}" onclick="addToCartAction(${p.id})">✓ Added</button>`
-                    : `<button class="car-add-btn add-to-cart-btn" data-product-id="${p.id}" onclick="addToCartAction(${p.id})">🛒 Add to Cart</button>`
+                    ? `<button class="car-add-btn add-to-cart-btn added" data-product-id="${p.id}" onclick="addToCart(${p.id}, event)">✓ Added</button>`
+                    : `<button class="car-add-btn add-to-cart-btn" data-product-id="${p.id}" onclick="addToCart(${p.id}, event)">🛒 Add to Cart</button>`
                   }
-                  <button class="order-now-btn car-order-now-btn" onclick="orderNowAction(${p.id})"><i class="fa-solid fa-bolt"></i> Order Now</button>
+                  <button class="order-now-btn car-order-now-btn" onclick="handleOrderNow(${p.id}, event)"><i class="fa-solid fa-bolt"></i> Order Now</button>
                 </div>
               </div>
               <div class="car-card-bottom">
@@ -6415,8 +6415,16 @@
         }, 3000);
       }
 
-      function requireAuth(actionPayload) {
+      function requireAuth(actionPayload, e) {
         if (!auth.currentUser) {
+          const btn = e ? (e.target.closest(".order-now-btn") || e.target.closest(".card-add-btn") || e.target.closest(".car-add-btn") || e.target) : null;
+          if (btn && btn.style) {
+            const origBg = btn.style.background;
+            btn.style.background = "var(--coral)";
+            setTimeout(() => {
+              btn.style.background = origBg;
+            }, 200);
+          }
           pendingAction = actionPayload;
           var banner = document.getElementById("signInContextBanner");
           var textEl = document.getElementById("signInContextText");
@@ -6428,7 +6436,7 @@
         return true;
       }
 
-      function addToCartAction(productId) {
+      function handleOrderNow(productId, e) {
         var product = allProducts.find(function(p) { return p.id === productId; });
         if (!product) return;
         
@@ -6438,24 +6446,24 @@
           return;
         }
         
-        if (!requireAuth({ type: 'addToCart', product: product, size: selectedSize })) return;
-        
-        doAddToCart(product, selectedSize);
-      }
-
-      function orderNowAction(productId) {
-        var product = allProducts.find(function(p) { return p.id === productId; });
-        if (!product) return;
-        
-        var selectedSize = getSelectedSize(product.id);
-        if (!selectedSize) {
-          showSizeError(product.id);
-          return;
-        }
-        
-        if (!requireAuth({ type: 'orderNow', product: product, size: selectedSize })) return;
+        if (!requireAuth({ type: 'orderNow', product: product, size: selectedSize, id: productId }, e)) return;
         
         doOpenOrderDialog([Object.assign({}, product, { selectedSize: selectedSize, qty: 1 })]);
+      }
+
+      function addToCart(productId, e) {
+        var product = allProducts.find(function(p) { return p.id === productId; });
+        if (!product) return;
+
+        var selectedSize = getSelectedSize(product.id);
+        if (!selectedSize) {
+          showSizeError(product.id);
+          return;
+        }
+        
+        if (!requireAuth({ type: 'addToCart', product: product, size: selectedSize, id: productId }, e)) return;
+        
+        doAddToCart(product, selectedSize);
       }
 
       function doAddToCart(product, size) {
@@ -6485,10 +6493,6 @@
         });
 
         showToast(product.name);
-      }
-
-      function addToCart(id, e) {
-        addToCartAction(id);
       }
 
       function removeFromCart(id) {
@@ -7102,13 +7106,13 @@
             if (action.product && action.size) {
               doAddToCart(action.product, action.size);
             } else {
-              addToCartAction(action.payload ? action.payload.id : action.id);
+              addToCart(action.payload ? action.payload.id : action.id, null);
             }
           } else if (action.type === "orderNow") {
             if (action.product && action.size) {
               doOpenOrderDialog([Object.assign({}, action.product, { selectedSize: action.size, qty: 1 })]);
             } else {
-              orderNowAction(action.payload ? action.payload.id : action.id);
+              handleOrderNow(action.payload ? action.payload.id : action.id, null);
             }
           } else if (action.type === "checkout") {
             handleCheckout();
@@ -8055,8 +8059,8 @@
       window.closeOrderCheckout = closeOrderCheckout;
       window.closeOrderCheckoutModal = closeOrderCheckoutModal;
       window.handleCheckout = handleCheckout;
-      window.orderNowAction = orderNowAction;
-      window.addToCartAction = addToCartAction;
+      window.handleOrderNow = handleOrderNow;
+      window.addToCart = addToCart;
       window.selectSize = selectSize;
       window.selectPaymentMethod = selectPaymentMethod;
       window.submitOrder = submitOrder;
