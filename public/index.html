@@ -6579,18 +6579,6 @@
       }
 
       // --- Firebase Logic ---
-      getRedirectResult(auth)
-        .then((result) => {
-          if (result && result.user) {
-            handleGoogleSuccess(result.user);
-          }
-        })
-        .catch((error) => {
-          if (error.code !== "auth/no-current-user") {
-            handleFirebaseError(error, "google");
-          }
-        });
-
       onAuthStateChanged(auth, async (user) => {
         // Hide loading overlay
         var overlay = document.getElementById("auth-loading-overlay");
@@ -6978,18 +6966,39 @@
           } catch (e) {}
         }
 
-        setGoogleButtonLoading(true, "Redirecting to Google...");
+        setGoogleButtonLoading(true, "Waiting for Google...");
 
         setTimeout(function () {
-          signInWithRedirect(auth, googleProvider).catch(function (error) {
-            setGoogleButtonLoading(false, "Continue with Google");
-            if (
-              error.code !== "auth/popup-closed-by-user" &&
-              error.code !== "auth/cancelled-popup-request"
-            ) {
-              handleFirebaseError(error, "google");
-            }
-          });
+          signInWithPopup(auth, googleProvider)
+            .then(function(result) {
+              closeModals();
+              var name = result.user.displayName || result.user.email.split("@")[0];
+              name = name.charAt(0).toUpperCase() + name.slice(1);
+    
+              setTimeout(function () {
+                showWelcomeToast("👋 Welcome, " + name + "!");
+                try {
+                  var saved = sessionStorage.getItem("eshirt_pending_action");
+                  if (saved) {
+                    pendingAction = JSON.parse(saved);
+                    sessionStorage.removeItem("eshirt_pending_action");
+                  }
+                } catch (e) {}
+
+                if (pendingAction) {
+                  executePendingAction();
+                }
+              }, 500);
+            })
+            .catch(function (error) {
+              setGoogleButtonLoading(false, "Continue with Google");
+              if (
+                error.code !== "auth/popup-closed-by-user" &&
+                error.code !== "auth/cancelled-popup-request"
+              ) {
+                handleFirebaseError(error, "google");
+              }
+            });
         }, 300);
       }
 
