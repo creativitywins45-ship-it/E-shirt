@@ -25,7 +25,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"
     />
     <title>E-shirt | Wear What Defines You</title>
 
@@ -3226,9 +3226,164 @@
           transform: translateY(0);
         }
       }
+
+      /* Modal overlay */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 10000;
+        display: flex;
+        align-items: flex-start; /* NOT center on mobile */
+        justify-content: center;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 16px 0;
+      }
+
+      /* Modal card */
+      .modal-card {
+        background: white;
+        border-radius: 20px;
+        padding: 32px 28px;
+        width: 90%;
+        max-width: 420px;
+        margin: auto;
+        position: relative;
+        max-height: none; /* remove any max-height */
+        overflow: visible;
+      }
+
+      /* On mobile viewport */
+      @media (max-width: 768px) {
+        .modal-overlay {
+          align-items: flex-start;
+          padding: 12px 0 40px 0;
+        }
+        .modal-card {
+          width: 94%;
+          padding: 24px 20px;
+          border-radius: 16px;
+          margin: 8px auto;
+        }
+      }
+
+      /* When keyboard is open on Android Chrome,
+         the viewport height shrinks. Make modal
+         scrollable so nothing is hidden: */
+      @media (max-height: 600px) {
+        .modal-overlay {
+          align-items: flex-start;
+          padding: 8px 0;
+        }
+        .modal-card {
+          padding: 20px 18px;
+          margin: 4px auto;
+        }
+      }
+
+      button,
+      .btn-filled,
+      .btn-outline,
+      .dd-item,
+      #navbar-avatar-area,
+      .modal-close-btn,
+      [onclick] {
+        cursor: pointer;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      @media (max-width: 480px) {
+        /* Larger input fields for fat fingers */
+        .modal-card input[type="email"],
+        .modal-card input[type="password"],
+        .modal-card input[type="text"] {
+          font-size: 16px !important;
+          /* 16px prevents iOS/Android auto-zoom */
+          padding: 14px 0 10px 0;
+          height: 52px;
+        }
+
+        /* Bigger submit buttons */
+        .modal-card .btn-filled {
+          padding: 16px;
+          font-size: 16px;
+          border-radius: 12px;
+          min-height: 52px;
+        }
+
+        /* Google button */
+        .google-signin-btn {
+          padding: 14px 16px;
+          font-size: 15px;
+          min-height: 52px;
+        }
+
+        /* More spacing between fields */
+        .modal-card .form-field {
+          margin-bottom: 20px;
+        }
+
+        /* Password toggle eye button */
+        .password-toggle {
+          padding: 12px;
+          min-width: 44px;
+          min-height: 44px;
+        }
+      }
+
+      input,
+      textarea,
+      select {
+        font-size: 16px;
+      }
     </style>
   </head>
   <body>
+    <div
+      id="auth-loading-overlay"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: white;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 300ms ease;
+      "
+    >
+      <div
+        style="
+          font-family: &quot;Playfair Display&quot;, serif;
+          font-size: 28px;
+          font-weight: 700;
+          color: #1a1a1a;
+          margin-bottom: 16px;
+        "
+      >
+        E-shirt.
+      </div>
+      <div
+        class="btn-spinner"
+        style="
+          width: 24px;
+          height: 24px;
+          border-color: rgba(255, 77, 48, 0.3);
+          border-top-color: #ff4d30;
+        "
+      ></div>
+    </div>
     <!-- Navigation -->
     <header id="navbar">
       <div class="container nav-container">
@@ -4565,7 +4720,7 @@
       onclick="closeModals(event)"
     >
       <!-- Sign In -->
-      <div class="modal" id="signInModal">
+      <div class="modal modal-card" id="signInModal">
         <button class="modal-close" onclick="closeModals()">
           <i class="fa-solid fa-xmark"></i>
         </button>
@@ -4589,8 +4744,7 @@
 
         <button
           type="button"
-          class="btn google-btn"
-          id="google-signin-btn"
+          class="btn google-btn google-signin-btn"
           onclick="handleGoogleSignIn()"
         >
           <svg width="18" height="18" viewBox="0 0 18 18">
@@ -4745,7 +4899,7 @@
       </div>
 
       <!-- Sign Up -->
-      <div class="modal" id="signUpModal">
+      <div class="modal modal-card" id="signUpModal">
         <button class="modal-close" onclick="closeModals()">
           <i class="fa-solid fa-xmark"></i>
         </button>
@@ -4769,7 +4923,7 @@
 
         <button
           type="button"
-          class="btn google-btn"
+          class="btn google-btn google-signin-btn"
           onclick="handleGoogleSignIn()"
         >
           <svg width="18" height="18" viewBox="0 0 18 18">
@@ -4895,7 +5049,11 @@
       </div>
 
       <!-- Verify Email Modal -->
-      <div class="modal" id="verifyEmailModal" style="text-align: center">
+      <div
+        class="modal modal-card"
+        id="verifyEmailModal"
+        style="text-align: center"
+      >
         <button class="modal-close" onclick="closeModals()">
           <i class="fa-solid fa-xmark"></i>
         </button>
@@ -4958,7 +5116,8 @@
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
       import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
-      import { getAuth,
+      import {
+        getAuth,
         createUserWithEmailAndPassword,
         signInWithEmailAndPassword,
         signInWithPopup,
@@ -4971,7 +5130,12 @@
         onAuthStateChanged,
         updateProfile,
       } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-      import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+      import {
+        getFirestore,
+        doc,
+        setDoc,
+        getDoc,
+      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyCeVfboaoqF6vE7BQaiGf93xTECYyG8QXs",
@@ -4989,8 +5153,51 @@
       const db = getFirestore(app);
       const googleProvider = new GoogleAuthProvider();
 
+      getRedirectResult(auth)
+        .then(function (result) {
+          if (result && result.user) {
+            try {
+              var saved = sessionStorage.getItem("eshirt_pending_action");
+              if (saved) {
+                pendingAction = JSON.parse(saved);
+                sessionStorage.removeItem("eshirt_pending_action");
+              }
+            } catch (e) {}
+
+            var name =
+              result.user.displayName || result.user.email.split("@")[0];
+            name = name.charAt(0).toUpperCase() + name.slice(1);
+
+            setTimeout(function () {
+              showWelcomeToast("👋 Welcome, " + name + "!");
+              executePendingAction();
+            }, 500);
+          }
+        })
+        .catch(function (error) {
+          if (
+            error.code &&
+            error.code !== "auth/no-current-user" &&
+            error.code !== "auth/null-user"
+          ) {
+            setTimeout(function () {
+              showWelcomeToast("❌ Google sign in failed: " + error.code);
+            }, 500);
+          }
+        });
+
       history.scrollRestoration = "manual";
       window.scrollTo(0, 0);
+
+      setTimeout(function () {
+        var overlay = document.getElementById("auth-loading-overlay");
+        if (overlay) {
+          overlay.style.opacity = "0";
+          setTimeout(function () {
+            overlay.style.display = "none";
+          }, 300);
+        }
+      }, 3000);
 
       window.addEventListener("load", () => {
         window.scrollTo({ top: 0, left: 0, behavior: "instant" });
@@ -6384,33 +6591,55 @@
         });
 
       onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          isUserSignedIn = true;
-          currentUserEmail = user.email;
-          currentUserName = user.displayName || user.email.split("@")[0];
-          currentUserName =
-            currentUserName.charAt(0).toUpperCase() + currentUserName.slice(1);
-          updateNavbarToSignedIn(user);
-          
-          try {
-            const userRef = doc(db, "users", user.uid);
-            const userSnap = await getDoc(userRef);
-            if (!userSnap.exists()) {
-              await setDoc(userRef, {
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName || currentUserName,
-                createdAt: new Date().toISOString()
-              }, { merge: true });
+        // Hide loading overlay
+        var overlay = document.getElementById("auth-loading-overlay");
+        if (overlay) {
+          overlay.style.opacity = "0";
+          setTimeout(function () {
+            overlay.style.display = "none";
+          }, 300);
+        }
+
+        const handleAuth = async () => {
+          if (user) {
+            isUserSignedIn = true;
+            currentUserEmail = user.email;
+            currentUserName = user.displayName || user.email.split("@")[0];
+            currentUserName =
+              currentUserName.charAt(0).toUpperCase() +
+              currentUserName.slice(1);
+            updateNavbarToSignedIn(user);
+
+            try {
+              const userRef = doc(db, "users", user.uid);
+              const userSnap = await getDoc(userRef);
+              if (!userSnap.exists()) {
+                await setDoc(
+                  userRef,
+                  {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || currentUserName,
+                    createdAt: new Date().toISOString(),
+                  },
+                  { merge: true },
+                );
+              }
+            } catch (e) {
+              console.error("Error storing user data:", e);
             }
-          } catch (e) {
-            console.error("Error storing user data:", e);
+          } else {
+            isUserSignedIn = false;
+            currentUserEmail = null;
+            currentUserName = null;
+            updateNavbarToSignedOut();
           }
+        };
+
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", handleAuth);
         } else {
-          isUserSignedIn = false;
-          currentUserEmail = null;
-          currentUserName = null;
-          updateNavbarToSignedOut();
+          handleAuth();
         }
       });
 
@@ -6437,13 +6666,18 @@
         });
 
         // Update hero section for welcome page feel
-        const heroTitle = document.querySelector("#main-landing .hero-content h1");
-        const heroSubtitle = document.querySelector("#main-landing .hero-content p");
+        const heroTitle = document.querySelector(
+          "#main-landing .hero-content h1",
+        );
+        const heroSubtitle = document.querySelector(
+          "#main-landing .hero-content p",
+        );
         if (heroTitle) {
           heroTitle.innerHTML = `Welcome back,<br /><span class="highlight">${currentUserName}</span>`;
         }
         if (heroSubtitle) {
-          heroSubtitle.textContent = "Ready to elevate your everyday selection? Start shopping newly arrived premium shirts & tees.";
+          heroSubtitle.textContent =
+            "Ready to elevate your everyday selection? Start shopping newly arrived premium shirts & tees.";
         }
 
         const avatarCircle = document.getElementById("navAvatarInitials");
@@ -6488,21 +6722,39 @@
         });
 
         // Reset hero section
-        const heroTitle = document.querySelector("#main-landing .hero-content h1");
-        const heroSubtitle = document.querySelector("#main-landing .hero-content p");
+        const heroTitle = document.querySelector(
+          "#main-landing .hero-content h1",
+        );
+        const heroSubtitle = document.querySelector(
+          "#main-landing .hero-content p",
+        );
         if (heroTitle) {
           heroTitle.innerHTML = `Wear What<br /><span class="highlight">Defines You.</span>`;
         }
         if (heroSubtitle) {
-          heroSubtitle.textContent = "Premium shirts & tees crafted for modern living. Elevate your everyday style effortlessly.";
+          heroSubtitle.textContent =
+            "Premium shirts & tees crafted for modern living. Elevate your everyday style effortlessly.";
         }
       }
 
       async function handleEmailSignUp() {
-        const fullName = document.getElementById("signup-name").value.trim();
-        const email = document.getElementById("signup-email").value.trim();
-        const password = document.getElementById("signup-password").value;
-        const confirmPassword = document.getElementById("signup-confirm").value;
+        const nameField = document.getElementById("signup-name");
+        const emailField = document.getElementById("signup-email");
+        const passwordField = document.getElementById("signup-password");
+        const confirmField = document.getElementById("signup-confirm");
+
+        if (!nameField || !emailField || !passwordField || !confirmField)
+          return;
+
+        nameField.blur();
+        emailField.blur();
+        passwordField.blur();
+        confirmField.blur();
+
+        const fullName = nameField.value.trim();
+        const email = emailField.value.trim();
+        const password = passwordField.value;
+        const confirmPassword = confirmField.value;
 
         let hasError = false;
 
@@ -6595,8 +6847,16 @@
       }
 
       async function handleEmailSignIn() {
-        const email = document.getElementById("signin-email").value.trim();
-        const password = document.getElementById("signin-password").value;
+        const emailField = document.getElementById("signin-email");
+        const passwordField = document.getElementById("signin-password");
+
+        if (!emailField || !passwordField) return;
+
+        emailField.blur();
+        passwordField.blur();
+
+        const email = emailField.value.trim();
+        const password = passwordField.value;
 
         let hasError = false;
         if (!email || !email.includes("@")) {
@@ -6668,56 +6928,68 @@
         } catch (e) {}
       }
 
+      function setGoogleButtonLoading(loading, text) {
+        var btns = document.querySelectorAll(".google-signin-btn");
+        btns.forEach(function (btn) {
+          btn.disabled = loading;
+          btn.style.opacity = loading ? "0.7" : "1";
+          btn.innerHTML = loading
+            ? '<span class="btn-spinner"></span> ' + text
+            : '<svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2045c0-.6381-.0573-1.2518-.1636-1.8409H9v3.4814h4.8436c-.2086 1.125-.8427 2.0782-1.7959 2.7164v2.2581h2.9082c1.7018-1.5668 2.6836-3.874 2.6836-6.615z" /><path fill="#34A853" d="M9 18c2.43 0 4.4673-.806 5.9564-2.1805l-2.9082-2.2581c-.8059.54-1.8368.859-3.0482.859-2.344 0-4.3282-1.5831-5.036-3.7104H.9574v2.3318C2.4382 15.9832 5.4818 18 9 18z" /><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.2822-1.1168-.2822-1.71s.1023-1.17.2823-1.71V4.9582H.9573A8.9965 8.9965 0 000 9c0 1.4523.3477 2.8268.9573 4.0418L3.964 10.71z" /><path fill="#EA4335" d="M9 3.5795c1.3214 0 2.5077.4541 3.4405 1.346l2.5813-2.5814C13.4632.8918 11.426 0 9 0 5.4818 0 2.4382 2.0168.9573 4.9582L3.964 7.29C4.6718 5.1627 6.656 3.5795 9 3.5795z" /></svg> ' +
+              text;
+        });
+      }
+
       function executePendingAction() {
-        const action = pendingAction;
+        if (!pendingAction) {
+          try {
+            var saved = sessionStorage.getItem("eshirt_pending_action");
+            if (saved) {
+              pendingAction = JSON.parse(saved);
+              sessionStorage.removeItem("eshirt_pending_action");
+            }
+          } catch (e) {}
+        }
+
+        if (!pendingAction) return;
+
+        var action = pendingAction;
         pendingAction = null;
-        if (action.type === "addToCart") {
-          addToCart(action.payload.id, null);
-        } else if (action.type === "orderNow") {
-          handleOrderNow(action.payload.id, null);
-        } else if (action.type === "checkout") {
-          handleCheckout();
-        }
+
+        setTimeout(function () {
+          if (action.type === "addToCart") {
+            addToCart(action.payload.id, null);
+          } else if (action.type === "orderNow") {
+            handleOrderNow(action.payload.id, null);
+          } else if (action.type === "checkout") {
+            handleCheckout();
+          }
+        }, 600);
       }
 
-      function handleGoogleSuccess(user) {
-        isUserSignedIn = true;
-        closeModals();
-        showWelcomeToast(
-          "👋 Welcome, " + (user.displayName || user.email.split("@")[0]) + "!",
-        );
+      function handleGoogleSignIn() {
         if (pendingAction) {
-          executePendingAction();
+          try {
+            sessionStorage.setItem(
+              "eshirt_pending_action",
+              JSON.stringify(pendingAction),
+            );
+          } catch (e) {}
         }
-      }
 
-      async function handleGoogleSignIn() {
-        setAuthButtonLoading("google-signin-btn", true, "Connecting...");
+        setGoogleButtonLoading(true, "Redirecting to Google...");
 
-        try {
-          const isMobile =
-            window.innerWidth < 768 ||
-            /Android|iPhone|iPad/i.test(navigator.userAgent);
-
-          if (isMobile) {
-            await signInWithRedirect(auth, googleProvider);
-          } else {
-            const result = await signInWithPopup(auth, googleProvider);
-            handleGoogleSuccess(result.user);
-          }
-        } catch (error) {
-          setAuthButtonLoading(
-            "google-signin-btn",
-            false,
-            "Continue with Google",
-          );
-          if (
-            error.code !== "auth/popup-closed-by-user" &&
-            error.code !== "auth/cancelled-popup-request"
-          ) {
-            handleFirebaseError(error, "google");
-          }
-        }
+        setTimeout(function () {
+          signInWithRedirect(auth, googleProvider).catch(function (error) {
+            setGoogleButtonLoading(false, "Continue with Google");
+            if (
+              error.code !== "auth/popup-closed-by-user" &&
+              error.code !== "auth/cancelled-popup-request"
+            ) {
+              handleFirebaseError(error, "google");
+            }
+          });
+        }, 300);
       }
 
       async function handleSignOut() {
