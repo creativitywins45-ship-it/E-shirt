@@ -3365,25 +3365,82 @@
         transform: none !important;
       }
 
-      .success-circle {
-        stroke-dasharray: 226; /* circumference of r=36 */
-        stroke-dashoffset: 226;
-        animation: drawCircle 600ms ease-out forwards;
-      }
-      .success-check {
-        stroke-dasharray: 60;
-        stroke-dashoffset: 60;
-        animation: drawCheck 400ms ease-out 500ms forwards;
-      }
-      @keyframes drawCircle {
-        to {
-          stroke-dashoffset: 0;
-        }
+      @keyframes successPop {
+        from { transform: scale(0); opacity: 0; }
+        to   { transform: scale(1); opacity: 1; }
       }
       @keyframes drawCheck {
-        to {
-          stroke-dashoffset: 0;
+        to { stroke-dashoffset: 0; }
+      }
+
+      .success-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+        flex-wrap: wrap;
+      }
+
+      .success-btn-primary {
+        flex: 1;
+        min-width: 140px;
+        padding: 14px 20px;
+        background: #FF4D30;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        transition: all 200ms ease;
+      }
+      .success-btn-primary:hover {
+        background: #e03e20;
+        transform: translateY(-1px);
+      }
+
+      .success-btn-secondary {
+        flex: 1;
+        min-width: 140px;
+        padding: 14px 20px;
+        background: white;
+        color: #FF4D30;
+        border: 1.5px solid #FF4D30;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        transition: all 200ms ease;
+      }
+      .success-btn-secondary:hover {
+        background: #fff0ee;
+      }
+
+      @media (max-width: 480px) {
+        .success-actions {
+          flex-direction: column;
+          gap: 10px;
         }
+        .success-btn-primary,
+        .success-btn-secondary {
+          width: 100%;
+          flex: none;
+          padding: 16px;
+          font-size: 15px;
+          min-height: 52px;
+        }
+      }
+
+      .size-pill.selected {
+        background: #FF4D30 !important;
+        color: white !important;
+        border: 1.5px solid #FF4D30 !important;
+        font-weight: 600 !important;
+        transform: scale(1.05);
+        transition: all 150ms ease;
       }
     </style>
   </head>
@@ -4660,10 +4717,21 @@
         <!-- Success State View (Hidden initially) -->
         <div class="checkout-success-view" id="checkoutSuccessView" style="display: none; opacity: 0; transition: opacity 300ms ease; transform: translateY(24px);">
           <!-- SVG animated checkmark circle -->
-          <div style="margin: 0 auto; width: 72px; height: 72px; padding: 2rem 0 1.5rem 0;" id="successCheckWrapper">
-            <svg width="72" height="72" viewBox="0 0 72 72">
-              <circle class="success-circle" cx="36" cy="36" r="34" fill="none" stroke="#FF4D30" stroke-width="3" style="stroke-linecap: round;" />
-              <path class="success-check" d="M22 38 l10 10 l18 -20" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+          <div style="
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF4D30, #ff6b4a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px auto;
+            box-shadow: 0 8px 24px rgba(255,77,48,0.35);
+            animation: successPop 500ms cubic-bezier(0.34,1.56,0.64,1) forwards;
+            transform: scale(0);
+          " id="successCheckWrapper">
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+              <path d="M8 18l7 7 13-13" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="35" stroke-dashoffset="35" style="animation: drawCheck 400ms ease-out 300ms forwards"/>
             </svg>
           </div>
           <h2 style="font-size: 22px; font-weight: bold; color: var(--charcoal); margin-bottom: 1.5rem; font-family: var(--font-heading);">🎉 Order Placed Successfully!</h2>
@@ -4683,9 +4751,9 @@
           <p style="font-weight: bold; color: var(--coral); font-size: 1.1rem; margin-bottom: 1.5rem;" id="successOrderTotal">Order Total: $29.98</p>
           
           <hr style="border: none; border-top: 1px solid #ddd; margin: 1.5rem 0;" />
-          <div style="display: flex; gap: 1rem; justify-content: center;">
-            <button class="btn btn-filled" onclick="finishCheckoutAndViewOrders()">📦 View My Orders</button>
-            <button class="btn btn-outline" onclick="keepShoppingFromSuccess()">🛍 Keep Shopping</button>
+          <div class="success-actions">
+            <button class="success-btn-primary" onclick="viewMyOrdersAfterSuccess()">📦 View My Orders</button>
+            <button class="success-btn-secondary" onclick="keepShoppingAfterSuccess()">🛍 Keep Shopping</button>
           </div>
         </div>
       </div>
@@ -5904,18 +5972,18 @@
                     <div class="card-name">${p.name}</div>
                     <div class="card-desc">${p.desc}</div>
                     <div class="card-price-row">${priceHtml}</div>
-                    <div class="card-sizes">
-                       <div class="sq-pill" onclick="toggleFilterPill(this)">S</div>
-                       <div class="sq-pill" onclick="toggleFilterPill(this)">M</div>
-                       <div class="sq-pill" onclick="toggleFilterPill(this)">L</div>
-                       <div class="sq-pill" onclick="toggleFilterPill(this)">XL</div>
+                    <div class="card-sizes size-pills-container" data-product-id="${p.id}">
+                       <button class="sq-pill size-pill" data-size="S" data-product-id="${p.id}" onclick="selectSize(this, '${p.id}')">S</button>
+                       <button class="sq-pill size-pill" data-size="M" data-product-id="${p.id}" onclick="selectSize(this, '${p.id}')">M</button>
+                       <button class="sq-pill size-pill" data-size="L" data-product-id="${p.id}" onclick="selectSize(this, '${p.id}')">L</button>
+                       <button class="sq-pill size-pill" data-size="XL" data-product-id="${p.id}" onclick="selectSize(this, '${p.id}')">XL</button>
                     </div>
                     ${
                       cart.some((item) => item.id === p.id) 
-                      ? `<button class="card-add-btn add-to-cart-btn added" data-product-id="${p.id}" onclick="addToCart(${p.id}, event)">✓ Added</button>`
-                      : `<button class="card-add-btn add-to-cart-btn" data-product-id="${p.id}" onclick="addToCart(${p.id}, event)">🛒 Add to Cart</button>`
+                      ? `<button class="card-add-btn add-to-cart-btn added" data-product-id="${p.id}" onclick="addToCartAction(${p.id})">✓ Added</button>`
+                      : `<button class="card-add-btn add-to-cart-btn" data-product-id="${p.id}" onclick="addToCartAction(${p.id})">🛒 Add to Cart</button>`
                     }
-                    <button class="order-now-btn card-order-now-btn" onclick="handleOrderNow(${p.id}, event)"><i class="fa-solid fa-bolt"></i> Order Now</button>
+                    <button class="order-now-btn card-order-now-btn" onclick="orderNowAction(${p.id})"><i class="fa-solid fa-bolt"></i> Order Now</button>
                  </div>
               </div>
            `;
@@ -6046,10 +6114,10 @@
                 <div class="car-add-wrapper" style="display:flex; flex-direction:column; gap:0.5rem;">
                   ${
                     cart.some((item) => item.id === p.id) 
-                    ? `<button class="car-add-btn add-to-cart-btn added" data-product-id="${p.id}" onclick="addToCart(${p.id}, event)">✓ Added</button>`
-                    : `<button class="car-add-btn add-to-cart-btn" data-product-id="${p.id}" onclick="addToCart(${p.id}, event)">🛒 Add to Cart</button>`
+                    ? `<button class="car-add-btn add-to-cart-btn added" data-product-id="${p.id}" onclick="addToCartAction(${p.id})">✓ Added</button>`
+                    : `<button class="car-add-btn add-to-cart-btn" data-product-id="${p.id}" onclick="addToCartAction(${p.id})">🛒 Add to Cart</button>`
                   }
-                  <button class="order-now-btn car-order-now-btn" onclick="handleOrderNow(${p.id}, event)"><i class="fa-solid fa-bolt"></i> Order Now</button>
+                  <button class="order-now-btn car-order-now-btn" onclick="orderNowAction(${p.id})"><i class="fa-solid fa-bolt"></i> Order Now</button>
                 </div>
               </div>
               <div class="car-card-bottom">
@@ -6059,11 +6127,11 @@
                 <div class="car-rating">
                   ${filledStars}${emptyStars} <span>${p.rating}</span>
                 </div>
-                <div class="car-sizes">
-                  <span class="car-size-pill">S</span>
-                  <span class="car-size-pill">M</span>
-                  <span class="car-size-pill">L</span>
-                  <span class="car-size-pill">XL</span>
+                <div class="car-sizes size-pills-container" data-product-id="${p.id}">
+                  <button class="car-size-pill size-pill" data-size="S" data-product-id="${p.id}" onclick="selectSize(this, '${p.id}')">S</button>
+                  <button class="car-size-pill size-pill" data-size="M" data-product-id="${p.id}" onclick="selectSize(this, '${p.id}')">M</button>
+                  <button class="car-size-pill size-pill" data-size="L" data-product-id="${p.id}" onclick="selectSize(this, '${p.id}')">L</button>
+                  <button class="car-size-pill size-pill" data-size="XL" data-product-id="${p.id}" onclick="selectSize(this, '${p.id}')">XL</button>
                 </div>
               </div>
             </div>
@@ -6293,40 +6361,120 @@
         setTimeout(() => toast.classList.remove("show"), 2500);
       }
 
-      function addToCart(id, e) {
+      function getSelectedSize(productId) {
+        var selectedBtn = document.querySelector('.size-pill.selected[data-product-id="' + productId + '"]');
+        return selectedBtn ? selectedBtn.getAttribute('data-size') : null;
+      }
+
+      function selectSize(clickedBtn, productId) {
+        var allSizeBtns = document.querySelectorAll('.size-pill[data-product-id="' + productId + '"]');
+        allSizeBtns.forEach(function(btn) {
+          btn.classList.remove('selected');
+          btn.style.background = 'white';
+          btn.style.color = '#1A1A1A';
+          btn.style.borderColor = '#ddd';
+          btn.style.fontWeight = '400';
+          btn.style.transform = 'scale(1)';
+        });
+        
+        clickedBtn.classList.add('selected');
+        
+        var card = clickedBtn.closest('.product-card') || clickedBtn.closest('.car-card');
+        if (card) {
+          card.setAttribute('data-selected-size', clickedBtn.getAttribute('data-size'));
+        }
+
+        var errorEl = document.querySelector('.size-error-msg[data-product-id="' + productId + '"]');
+        if (errorEl) errorEl.style.display = 'none';
+      }
+
+      function showSizeError(productId) {
+        var container = document.querySelector('.size-pills-container[data-product-id="' + productId + '"]');
+        var errorEl = document.querySelector('.size-error-msg[data-product-id="' + productId + '"]');
+        
+        if (!errorEl && container) {
+          errorEl = document.createElement('div');
+          errorEl.className = 'size-error-msg';
+          errorEl.setAttribute('data-product-id', productId);
+          errorEl.style.cssText = 
+            'color:#FF4D30; font-size:11px; font-weight:500; margin-top:4px; text-align:center; animation: fadeIn 200ms ease;';
+          errorEl.textContent = '⚠️ Please select a size first';
+          container.parentNode.insertBefore(errorEl, container.nextSibling);
+        } else if (errorEl) {
+          errorEl.style.display = 'block';
+        }
+        
+        if (container) {
+          container.style.animation = 'none';
+          container.offsetHeight; 
+          container.style.animation = 'shake 300ms ease';
+        }
+        
+        setTimeout(function() {
+          if (errorEl) errorEl.style.display = 'none';
+        }, 3000);
+      }
+
+      function requireAuth(actionPayload) {
         if (!auth.currentUser) {
-          const btn = e
-            ? e.target.closest(".card-add-btn") ||
-              e.target.closest(".car-add-btn") ||
-              e.target
-            : null;
-          if (btn) {
-            const origBg = btn.style.background;
-            btn.style.background = "var(--coral)";
-            setTimeout(() => {
-              btn.style.background = origBg;
-            }, 200);
-          }
-          pendingAction = { type: "addToCart", payload: { id, e: null } };
-          document.getElementById("signInContextBanner").style.display = "flex";
-          document.getElementById("signInContextText").textContent =
-            "Please sign in to add items to your cart or place orders.";
+          pendingAction = actionPayload;
+          var banner = document.getElementById("signInContextBanner");
+          var textEl = document.getElementById("signInContextText");
+          if (banner) banner.style.display = "flex";
+          if (textEl) textEl.textContent = "Please sign in to add items to your cart or place orders.";
           openModal("signIn");
+          return false;
+        }
+        return true;
+      }
+
+      function addToCartAction(productId) {
+        var product = allProducts.find(function(p) { return p.id === productId; });
+        if (!product) return;
+        
+        var selectedSize = getSelectedSize(product.id);
+        if (!selectedSize) {
+          showSizeError(product.id);
           return;
         }
-        const product = allProducts.find((p) => p.id === id);
-        const activePrice = product.salePrice || product.price;
-        const existing = cart.find((item) => item.id === id);
+        
+        if (!requireAuth({ type: 'addToCart', product: product, size: selectedSize })) return;
+        
+        doAddToCart(product, selectedSize);
+      }
+
+      function orderNowAction(productId) {
+        var product = allProducts.find(function(p) { return p.id === productId; });
+        if (!product) return;
+        
+        var selectedSize = getSelectedSize(product.id);
+        if (!selectedSize) {
+          showSizeError(product.id);
+          return;
+        }
+        
+        if (!requireAuth({ type: 'orderNow', product: product, size: selectedSize })) return;
+        
+        doOpenOrderDialog([Object.assign({}, product, { selectedSize: selectedSize, qty: 1 })]);
+      }
+
+      function doAddToCart(product, size) {
+        var id = product.id;
+        var activePrice = product.salePrice || product.price;
+
+        var existing = cart.find(function(item) {
+          return item.id === id && (item.selectedSize === size || item.size === size);
+        });
+
         if (existing) {
           existing.qty += 1;
         } else {
-          cart.push({ ...product, price: activePrice, qty: 1 });
+          cart.push(Object.assign({}, product, { price: activePrice, qty: 1, selectedSize: size, size: size }));
         }
-        updateCartBadge();
 
-        var btns = document.querySelectorAll(
-          '.add-to-cart-btn[data-product-id="' + id + '"], [data-product-id="' + id + '"] .add-to-cart-btn'
-        );
+        updateCartBadge();
+        
+        var btns = document.querySelectorAll('.add-to-cart-btn[data-product-id="' + id + '"]');
         btns.forEach(function(btn) {
           btn.classList.add('added');
           btn.innerHTML = '✓ Added';
@@ -6337,6 +6485,10 @@
         });
 
         showToast(product.name);
+      }
+
+      function addToCart(id, e) {
+        addToCartAction(id);
       }
 
       function removeFromCart(id) {
@@ -6947,9 +7099,17 @@
 
         setTimeout(function () {
           if (action.type === "addToCart") {
-            addToCart(action.payload.id, null);
+            if (action.product && action.size) {
+              doAddToCart(action.product, action.size);
+            } else {
+              addToCartAction(action.payload ? action.payload.id : action.id);
+            }
           } else if (action.type === "orderNow") {
-            handleOrderNow(action.payload.id, null);
+            if (action.product && action.size) {
+              doOpenOrderDialog([Object.assign({}, action.product, { selectedSize: action.size, qty: 1 })]);
+            } else {
+              orderNowAction(action.payload ? action.payload.id : action.id);
+            }
           } else if (action.type === "checkout") {
             handleCheckout();
           }
@@ -7210,37 +7370,52 @@
       }
 
       function closeOrderCheckoutModal() {
-        document
-          .getElementById("orderCheckoutOverlay")
-          .classList.remove("active");
+        var overlay = document.getElementById("orderCheckoutOverlay");
+        if (overlay) {
+          overlay.style.opacity = '0';
+          overlay.style.transform = 'scale(0.95)';
+          setTimeout(function() {
+            overlay.classList.remove("active");
+            overlay.style.display = 'none';
+            overlay.style.opacity = '';
+            overlay.style.transform = '';
+          }, 250);
+        }
       }
 
-      function resetCheckoutForm() {
-        document.getElementById("checkoutFormView").style.display = "block";
-        document
-          .getElementById("checkoutSuccessView")
-          .classList.remove("active");
-        document.getElementById("placeOrderBtn").innerHTML =
-          "⚡ Place Order Now";
-        document.getElementById("placeOrderBtn").disabled = false;
-        document.getElementById("placeOrderBtn").style.opacity = "1";
-        document
-          .querySelectorAll(".floating-input, .floating-textarea")
-          .forEach((el) => {
-            el.classList.remove("invalid");
-            el.value = "";
-          });
-        // Default to COD
-        selectPaymentMethod(
-          "cod",
-          document.querySelector('.payment-pill[onclick*="cod"]'),
-        );
+      function resetOrderDialogToForm() {
+        var successContent = document.getElementById('checkoutSuccessView');
+        if (successContent) successContent.style.display = 'none';
+        
+        var formContent = document.getElementById('checkoutFormView');
+        if (formContent) {
+          formContent.style.display = 'block';
+          formContent.style.opacity = '1';
+        }
+        
+        var placeBtn = document.getElementById('placeOrderBtn');
+        if (placeBtn) {
+          placeBtn.disabled = false;
+          placeBtn.style.opacity = '1';
+          placeBtn.innerHTML = '⚡ Place Order Now';
+        }
+        
+        var fields = document.querySelectorAll('#orderCheckoutModal input, #orderCheckoutModal textarea');
+        fields.forEach(function(f) { 
+          f.value = ''; 
+          f.classList.remove('invalid');
+        });
+        
+        var pills = document.querySelectorAll('.payment-pill');
+        if (pills.length > 0) {
+          selectPaymentMethod('cod', pills[0]);
+        }
       }
 
       function handleCheckout() {
         if (cart.length === 0) return;
         if (!auth.currentUser) {
-          const btn = document.querySelector(".checkout-btn") || event?.target;
+          const btn = event ? event.target.closest(".checkout-btn") : document.querySelector(".checkout-btn");
           if (btn && btn.style) {
             const origBg = btn.style.background;
             btn.style.background = "var(--coral)";
@@ -7256,89 +7431,47 @@
           toggleCart();
           return;
         }
-        currentCheckoutItems = [...cart];
-        openCheckoutDialog();
+        doOpenOrderDialog([...cart]);
         toggleCart(); // Close cart drawer
       }
 
-      function handleOrderNow(productId, e) {
-        if (!auth.currentUser) {
-          const btn = e ? e.target.closest(".order-now-btn") || e.target : null;
-          if (btn) {
-            const origBg = btn.style.background;
-            btn.style.background = "var(--coral)";
-            setTimeout(() => {
-              btn.style.background = origBg;
-            }, 200);
-          }
-          pendingAction = {
-            type: "orderNow",
-            payload: { id: productId, e: null },
-          };
-          document.getElementById("signInContextBanner").style.display = "flex";
-          document.getElementById("signInContextText").textContent =
-            "Please sign in to place orders.";
-          openModal("signIn");
-          return;
-        }
-
-        const cardInfo = e
-          ? e.target.closest(".car-card-bottom") ||
-            e.target.closest(".card-info")
-          : null;
-        let size = "M";
-        if (cardInfo) {
-          const activeSize = cardInfo.querySelector(
-            ".car-size-pill.active, .sq-pill.active",
-          );
-          if (activeSize) size = activeSize.textContent;
-        }
-
-        const product = allProducts.find((p) => p.id === productId);
-        if (!product) return;
-
-        currentCheckoutItems = [
-          {
-            id: product.id,
-            name: product.name,
-            price: product.salePrice || product.price,
-            emoji: product.emoji,
-            gradient: product.gradient,
-            qty: 1,
-            size: size,
-          },
-        ];
-        openCheckoutDialog();
-      }
-
-      function openCheckoutDialog() {
-        resetCheckoutForm();
+      function doOpenOrderDialog(items) {
+        resetOrderDialogToForm();
+        currentCheckoutItems = items;
+        
         const itemsContainer = document.getElementById("checkoutDialogItems");
         let itemsHtml = "";
         let subtotal = 0;
 
         currentCheckoutItems.forEach((item) => {
           subtotal += (item.price || 0) * (item.qty || 1);
-          const sizeText = item.size ? item.size : "M";
+          const sizeText = item.size || item.selectedSize || "M";
           itemsHtml += `
             <div class="checkout-item">
                <div class="checkout-item-img" style="background: ${item.gradient}">${item.emoji}</div>
                <div class="checkout-item-info">
                   <div class="checkout-item-name">${item.name}</div>
-                  <div class="checkout-item-meta">Size: ${sizeText} | Qty: ${item.qty}</div>
+                  <div class="checkout-item-meta">Size: ${sizeText} | Qty: ${item.qty || 1}</div>
                   <div class="checkout-item-price">$${((item.price || 0) * (item.qty || 1)).toFixed(2)}</div>
                </div>
             </div>
          `;
         });
 
-        itemsContainer.innerHTML = itemsHtml;
-        document.getElementById("checkoutDialogSubtotal").textContent =
-          "$" + subtotal.toFixed(2);
-        document.getElementById("checkoutDialogTotal").textContent =
-          "$" + (subtotal > 0 ? (subtotal + 4.99).toFixed(2) : "0.00");
+        if (itemsContainer) itemsContainer.innerHTML = itemsHtml;
+        var subtotalEl = document.getElementById("checkoutDialogSubtotal");
+        if (subtotalEl) subtotalEl.textContent = "$" + subtotal.toFixed(2);
+        var totalEl = document.getElementById("checkoutDialogTotal");
+        if (totalEl) totalEl.textContent = "$" + (subtotal > 0 ? (subtotal + 4.99).toFixed(2) : "0.00");
 
-        document.getElementById("orderCheckoutOverlay").classList.add("active");
+        var overlay = document.getElementById("orderCheckoutOverlay");
+        if (overlay) {
+          overlay.classList.add("active");
+          overlay.style.display = 'flex';
+          requestAnimationFrame(function() {
+            overlay.style.opacity = '1';
+          });
+        }
       }
 
       function selectPaymentMethod(type, btn) {
@@ -7605,32 +7738,20 @@
         document.querySelectorAll('.floating-input, .floating-textarea').forEach(el => el.classList.remove('invalid'));
       }
 
-      function finishCheckoutAndViewOrders() {
-        var modal = document.getElementById('orderCheckoutModal');
-        modal.style.transition = 'opacity 300ms ease';
-        modal.style.opacity = '0';
-        setTimeout(function() {
-          closeOrderCheckoutModal();
-          modal.style.opacity = '1';
-          clearOrderForm();
-          showOrdersPage();
-        }, 300);
+      function viewMyOrdersAfterSuccess() {
+        resetOrderDialogToForm();
+        closeOrderCheckoutModal();
+        showOrdersPage();
+        window.scrollTo(0, 0);
+        renderOrders("All");
       }
 
-      function keepShoppingFromSuccess() {
-        var modal = document.getElementById('orderCheckoutModal');
-        modal.style.transition = 'opacity 300ms ease';
-        modal.style.opacity = '0';
-        
-        var successEtaText = document.getElementById('successETA').textContent;
-        var orderIdText = document.getElementById('successOrderId').textContent;
-        
-        setTimeout(function() {
-          closeOrderCheckoutModal();
-          modal.style.opacity = '1';
-          clearOrderForm();
-          showToast('✓ Order ' + orderIdText + ' confirmed! Estimated delivery: ' + successEtaText);
-        }, 300);
+      function keepShoppingAfterSuccess() {
+        resetOrderDialogToForm();
+        closeOrderCheckoutModal();
+        showShopPage();
+        window.scrollTo(0, 0);
+        applyAllFilters();
       }
 
       function filterOrders(filter, btnElement) {
@@ -7934,11 +8055,14 @@
       window.closeOrderCheckout = closeOrderCheckout;
       window.closeOrderCheckoutModal = closeOrderCheckoutModal;
       window.handleCheckout = handleCheckout;
-      window.handleOrderNow = handleOrderNow;
+      window.orderNowAction = orderNowAction;
+      window.addToCartAction = addToCartAction;
+      window.selectSize = selectSize;
       window.selectPaymentMethod = selectPaymentMethod;
       window.submitOrder = submitOrder;
       window.showOrderSuccess = showOrderSuccess;
-      window.finishCheckoutAndViewOrders = finishCheckoutAndViewOrders;
+      window.viewMyOrdersAfterSuccess = viewMyOrdersAfterSuccess;
+      window.keepShoppingAfterSuccess = keepShoppingAfterSuccess;
       window.filterOrders = filterOrders;
       window.showCancelBox = showCancelBox;
       window.hideCancelBox = hideCancelBox;
