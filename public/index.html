@@ -6422,35 +6422,46 @@
         setTimeout(() => toast.classList.remove("show"), 2500);
       }
 
-      function getSelectedSize(productId) {
+      function getSelectedSize(productId, e) {
         var pid = String(productId);
+        var containerTarget = document;
         
-        // Method 1: Check for .selected class
-        var selectedBtn = document.querySelector(
-          '.size-pill.selected[data-product-id="' + 
-          pid + '"]'
+        if (e && e.target) {
+          var parentCard = e.target.closest('.shop-product-card') || 
+                           e.target.closest('.carousel-card') || 
+                           e.target.closest('.checkout-item') ||
+                           e.target.closest('.cart-item');
+          if (parentCard) containerTarget = parentCard;
+        }
+        
+        // Method 1: Check for .selected class inside the specific card
+        var selectedBtn = containerTarget.querySelector(
+          '.size-pill.selected[data-product-id="' + pid + '"]'
         );
+        if (!selectedBtn && containerTarget === document) {
+           // Fallback to global if event context fails
+           selectedBtn = document.querySelector('.size-pill.selected[data-product-id="' + pid + '"]');
+        }
         if (selectedBtn) {
           return selectedBtn.getAttribute('data-size');
         }
         
-        // Method 2: Check data-selected-size on card
-        var card = document.querySelector(
-          '[data-product-id="' + pid + '"]' +
-          '[data-selected-size]'
-        );
-        if (card) {
-          var size = card.getAttribute(
-            'data-selected-size');
+        // Method 2: Check data-selected-size on the specific card or global
+        var cardWithData = containerTarget.querySelector ? containerTarget.querySelector('[data-selected-size]') : null;
+        if (!cardWithData && containerTarget.hasAttribute && containerTarget.hasAttribute('data-selected-size')) cardWithData = containerTarget;
+        if (!cardWithData) {
+           cardWithData = document.querySelector('[data-product-id="' + pid + '"][data-selected-size]');
+        }
+        if (cardWithData) {
+          var size = cardWithData.getAttribute('data-selected-size');
           if (size) return size;
         }
         
         // Method 3: Check for .active class 
         // (fallback for filter pills that use active)
-        var activeBtn = document.querySelector(
-          '.size-pill.active[data-product-id="' + 
-          pid + '"]'
-        );
+        var activeBtn = containerTarget.querySelector(
+          '.size-pill.active[data-product-id="' + pid + '"]'
+        ) || document.querySelector('.size-pill.active[data-product-id="' + pid + '"]');
         if (activeBtn) {
           return activeBtn.getAttribute('data-size');
         }
@@ -6462,8 +6473,13 @@
         // Convert productId to consistent type
         var pid = String(productId);
         
-        // Deselect ALL size pills for this product
-        var allSizeBtns = document.querySelectorAll(
+        var containerTarget = document;
+        var parentCard = clickedBtn.closest('.shop-product-card') || 
+                         clickedBtn.closest('.carousel-card');
+        if (parentCard) containerTarget = parentCard;
+        
+        // Deselect ALL size pills for this product in THIS card
+        var allSizeBtns = containerTarget.querySelectorAll(
           '.size-pill[data-product-id="' + pid + '"]'
         );
         allSizeBtns.forEach(function(btn) {
@@ -6504,21 +6520,31 @@
         }
         
         // Hide size error message if showing
-        var errorEl = document.querySelector(
-          '.size-error-msg[data-product-id="' + 
-          pid + '"]'
-        );
+        var errorEl = containerTarget.querySelector(
+          '.size-error-msg[data-product-id="' + pid + '"]'
+        ) || document.querySelector('.size-error-msg[data-product-id="' + pid + '"]');
         if (errorEl) errorEl.style.display = 'none';
       }
 
-      function showSizeError(productId) {
-        var container = document.querySelector('.size-pills-container[data-product-id="' + productId + '"]');
-        var errorEl = document.querySelector('.size-error-msg[data-product-id="' + productId + '"]');
+      function showSizeError(productId, e) {
+        var pidStr = String(productId);
+        var containerTarget = document;
+        if (e && e.target) {
+          var parentCard = e.target.closest('.shop-product-card') || 
+                           e.target.closest('.carousel-card');
+          if (parentCard) containerTarget = parentCard;
+        }
+
+        var container = containerTarget.querySelector('.size-pills-container[data-product-id="' + pidStr + '"]');
+        if (!container) container = document.querySelector('.size-pills-container[data-product-id="' + pidStr + '"]');
+        
+        var errorEl = containerTarget.querySelector('.size-error-msg[data-product-id="' + pidStr + '"]');
+        if (!errorEl) errorEl = document.querySelector('.size-error-msg[data-product-id="' + pidStr + '"]');
         
         if (!errorEl && container) {
           errorEl = document.createElement('div');
           errorEl.className = 'size-error-msg';
-          errorEl.setAttribute('data-product-id', productId);
+          errorEl.setAttribute('data-product-id', pidStr);
           errorEl.style.cssText = 
             'color:#FF4D30; font-size:11px; font-weight:500; margin-top:4px; text-align:center; animation: fadeIn 200ms ease;';
           errorEl.textContent = '⚠️ Please select a size first';
@@ -6576,10 +6602,10 @@
           return;
         }
         
-        var selectedSize = getSelectedSize(pidStr);
+        var selectedSize = getSelectedSize(pidStr, e);
         
         if (!selectedSize) {
-          showSizeError(pidStr);
+          showSizeError(pidStr, e);
           return;
         }
         
@@ -6611,10 +6637,10 @@
           return;
         }
         
-        var selectedSize = getSelectedSize(pidStr);
+        var selectedSize = getSelectedSize(pidStr, e);
         
         if (!selectedSize) {
-          showSizeError(pidStr);
+          showSizeError(pidStr, e);
           return;
         }
         
