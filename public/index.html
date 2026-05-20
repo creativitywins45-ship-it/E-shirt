@@ -4873,8 +4873,8 @@
 
         <form
           onsubmit="
+            event.preventDefault();
             handleEmailSignIn();
-            return false;
           "
           novalidate
         >
@@ -5052,8 +5052,8 @@
 
         <form
           onsubmit="
+            event.preventDefault();
             handleEmailSignUp();
-            return false;
           "
           novalidate
         >
@@ -5250,40 +5250,7 @@
       const db = getFirestore(app);
       const googleProvider = new GoogleAuthProvider();
 
-      // Handle Google redirect result on page load.
-      // This fires when user returns from Google sign in.
-      getRedirectResult(auth)
-        .then(function(result) {
-          if (result && result.user) {
-            // Restore pending action from sessionStorage
-            try {
-              var saved = sessionStorage.getItem('eshirt_pending_action');
-              if (saved) {
-                pendingAction = JSON.parse(saved);
-                sessionStorage.removeItem('eshirt_pending_action');
-              }
-            } catch(e) {}
 
-            var name = result.user.displayName || result.user.email.split('@')[0];
-            name = name.charAt(0).toUpperCase() + name.slice(1);
-
-            // Show welcome toast after short delay
-            setTimeout(function() {
-              showWelcomeToast('👋 Welcome, ' + name + '!');
-              executePendingAction();
-            }, 500);
-          }
-        })
-        .catch(function(error) {
-          // Only log real errors, not "no redirect"
-          if (error.code &&
-              error.code !== 'auth/no-current-user' &&
-              error.code !== 'auth/null-user') {
-            setTimeout(function() {
-              showWelcomeToast('❌ Google sign in failed: ' + error.code);
-            }, 500);
-          }
-        });
 
       history.scrollRestoration = "manual";
       window.scrollTo(0, 0);
@@ -7533,31 +7500,31 @@
       }
 
       function handleGoogleSignIn() {
-        // Save pending action to sessionStorage
-        // so it survives the page reload after redirect
-        if (pendingAction) {
-          try {
-            sessionStorage.setItem(
-              'eshirt_pending_action',
-              JSON.stringify(pendingAction)
-            );
-          } catch(e) {}
-        }
+        // Clear old errors
+        hideInlineError('signin-form-error');
+        hideInlineError('signup-form-error');
 
-        setGoogleButtonLoading(
-          true, 'Redirecting to Google...');
+        setGoogleButtonLoading(true, 'Signing in...');
 
-        // Small delay so user sees the loading state
-        setTimeout(function() {
-          signInWithRedirect(auth, googleProvider)
-            .catch(function(error) {
-              setGoogleButtonLoading(
-                false, 'Continue with Google');
-              if (error.code !== 'auth/popup-closed-by-user') {
-                handleFirebaseError(error, 'google');
-              }
-            });
-        }, 300);
+        // Must call signInWithPopup synchronously inside the click handler!
+        // DO NOT use setTimeout or the browser will block the popup on mobile.
+        signInWithPopup(auth, googleProvider)
+          .then(function(result) {
+            setGoogleButtonLoading(false, 'Continue with Google');
+            closeModals();
+            var name = result.user.displayName || result.user.email.split('@')[0];
+            name = name.charAt(0).toUpperCase() + name.slice(1);
+            showWelcomeToast('👋 Welcome, ' + name + '!');
+            if (pendingAction) {
+              executePendingAction();
+            }
+          })
+          .catch(function(error) {
+            setGoogleButtonLoading(false, 'Continue with Google');
+            if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+              handleFirebaseError(error, 'google');
+            }
+          });
       }
 
       async function handleSignOut() {
