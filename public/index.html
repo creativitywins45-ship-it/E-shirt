@@ -4489,8 +4489,8 @@
             <form
               class="newsletter-form"
               onsubmit="
-                event.preventDefault();
                 alert('Subscribed!');
+                return false;
               "
             >
               <input
@@ -4873,8 +4873,8 @@
 
         <form
           onsubmit="
-            event.preventDefault();
             handleEmailSignIn();
+            return false;
           "
           novalidate
         >
@@ -5052,8 +5052,8 @@
 
         <form
           onsubmit="
-            event.preventDefault();
             handleEmailSignUp();
+            return false;
           "
           novalidate
         >
@@ -6723,6 +6723,10 @@
         // Show toast
         showToast('✓ ' + product.name + 
           ' (Size ' + size + ') added to cart!');
+          
+        if (typeof saveCartToFirestore === 'function') {
+          saveCartToFirestore();
+        }
       }
 
       function removeFromCart(id) {
@@ -6757,6 +6761,10 @@
               'opacity:1;';
           });
         }
+        
+        if (typeof saveCartToFirestore === 'function') {
+          saveCartToFirestore();
+        }
       }
 
       function resetAllCartButtons() {
@@ -6780,6 +6788,10 @@
           if (item.qty <= 0) removeFromCart(id);
           else renderCart();
           updateCartBadge();
+          
+          if (typeof saveCartToFirestore === 'function') {
+            saveCartToFirestore();
+          }
         }
       }
 
