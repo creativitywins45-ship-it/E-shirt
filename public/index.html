@@ -1727,6 +1727,49 @@
         background: white;
       }
 
+      /* Product card size pills — override sq-pill */
+      .size-pills-container .size-pill {
+        background: white;
+        color: #1A1A1A;
+        border: 1.5px solid #ddd;
+        font-weight: 500;
+        transition: all 150ms ease;
+        cursor: pointer;
+        min-width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        padding: 0 8px;
+      }
+
+      .size-pills-container .size-pill:hover {
+        background: #fff0ee;
+        border-color: #FF4D30;
+        color: #FF4D30;
+      }
+
+      /* SELECTED state — highest specificity */
+      .size-pills-container .size-pill.selected,
+      .size-pills-container .size-pill.selected:hover {
+        background: #FF4D30 !important;
+        color: white !important;
+        border-color: #FF4D30 !important;
+        font-weight: 600 !important;
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(255,77,48,0.3);
+      }
+
+      /* Make sure sq-pill inside size-pills-container 
+         does NOT get the sq-pill.active override */
+      .size-pills-container .sq-pill.active {
+        background: #FF4D30 !important;
+        color: white !important;
+        border-color: #FF4D30 !important;
+      }
+
       .card-add-btn {
         width: 100%;
         background: var(--charcoal);
@@ -5945,6 +5988,19 @@
           const filledStars = "★".repeat(Math.round(p.rating));
           const emptyStars = "☆".repeat(5 - Math.round(p.rating));
 
+          var alreadyInCart = cart.some(function(item) {
+            return Number(item.id) === Number(p.id);
+          });
+          var addBtnClass = alreadyInCart 
+            ? 'card-add-btn add-to-cart-btn added' 
+            : 'card-add-btn add-to-cart-btn';
+          var addBtnText = alreadyInCart 
+            ? '✓ Added' 
+            : '🛒 Add to Cart';
+          var addBtnStyle = alreadyInCart
+            ? 'background:#FF4D30;color:white;pointer-events:none;cursor:default;'
+            : '';
+
           grid.innerHTML += `
               <div class="shop-product-card" style="animation: fadeSlideUp 0.6s ease forwards ${delay}ms; opacity: 0; transform: translateY(20px);">
                  ${badgeHtml}
@@ -5978,11 +6034,7 @@
                        <button class="sq-pill size-pill" data-size="L" data-product-id="${p.id}" onclick="selectSize(this, '${p.id}')">L</button>
                        <button class="sq-pill size-pill" data-size="XL" data-product-id="${p.id}" onclick="selectSize(this, '${p.id}')">XL</button>
                     </div>
-                    ${
-                      cart.some((item) => item.id === p.id) 
-                      ? `<button class="card-add-btn add-to-cart-btn added" data-product-id="${p.id}" onclick="addToCart(${p.id}, event)">✓ Added</button>`
-                      : `<button class="card-add-btn add-to-cart-btn" data-product-id="${p.id}" onclick="addToCart(${p.id}, event)">🛒 Add to Cart</button>`
-                    }
+                    <button class="${addBtnClass}" style="${addBtnStyle}" data-product-id="${p.id}" onclick="addToCart(${p.id}, event)">${addBtnText}</button>
                     <button class="order-now-btn card-order-now-btn" onclick="handleOrderNow(${p.id}, event)"><i class="fa-solid fa-bolt"></i> Order Now</button>
                  </div>
               </div>
@@ -6090,6 +6142,19 @@
           const filledStars = "★".repeat(Math.round(p.rating));
           const emptyStars = "☆".repeat(5 - Math.round(p.rating));
 
+          var alreadyInCart = cart.some(function(item) {
+            return Number(item.id) === Number(p.id);
+          });
+          var addBtnClass = alreadyInCart 
+            ? 'car-add-btn add-to-cart-btn added' 
+            : 'car-add-btn add-to-cart-btn';
+          var addBtnText = alreadyInCart 
+            ? '✓ Added' 
+            : '🛒 Add to Cart';
+          var addBtnStyle = alreadyInCart
+            ? 'background:#FF4D30;color:white;pointer-events:none;cursor:default;'
+            : '';
+
           html += `
           <div class="carousel-card-container">
             <div class="carousel-card" id="car-card-${index}">
@@ -6112,11 +6177,7 @@
                 <button class="car-wishlist" onclick="const i = this.children[0]; if(i.classList.contains('fa-regular')){ i.classList.replace('fa-regular', 'fa-solid'); this.classList.add('active'); } else { i.classList.replace('fa-solid', 'fa-regular'); this.classList.remove('active'); }"><i class="fa-regular fa-heart"></i></button>
                 
                 <div class="car-add-wrapper" style="display:flex; flex-direction:column; gap:0.5rem;">
-                  ${
-                    cart.some((item) => item.id === p.id) 
-                    ? `<button class="car-add-btn add-to-cart-btn added" data-product-id="${p.id}" onclick="addToCart(${p.id}, event)">✓ Added</button>`
-                    : `<button class="car-add-btn add-to-cart-btn" data-product-id="${p.id}" onclick="addToCart(${p.id}, event)">🛒 Add to Cart</button>`
-                  }
+                  <button class="${addBtnClass}" style="${addBtnStyle}" data-product-id="${p.id}" onclick="addToCart(${p.id}, event)">${addBtnText}</button>
                   <button class="order-now-btn car-order-now-btn" onclick="handleOrderNow(${p.id}, event)"><i class="fa-solid fa-bolt"></i> Order Now</button>
                 </div>
               </div>
@@ -6362,29 +6423,91 @@
       }
 
       function getSelectedSize(productId) {
-        var selectedBtn = document.querySelector('.size-pill.selected[data-product-id="' + productId + '"]');
-        return selectedBtn ? selectedBtn.getAttribute('data-size') : null;
+        var pid = String(productId);
+        
+        // Method 1: Check for .selected class
+        var selectedBtn = document.querySelector(
+          '.size-pill.selected[data-product-id="' + 
+          pid + '"]'
+        );
+        if (selectedBtn) {
+          return selectedBtn.getAttribute('data-size');
+        }
+        
+        // Method 2: Check data-selected-size on card
+        var card = document.querySelector(
+          '[data-product-id="' + pid + '"]' +
+          '[data-selected-size]'
+        );
+        if (card) {
+          var size = card.getAttribute(
+            'data-selected-size');
+          if (size) return size;
+        }
+        
+        // Method 3: Check for .active class 
+        // (fallback for filter pills that use active)
+        var activeBtn = document.querySelector(
+          '.size-pill.active[data-product-id="' + 
+          pid + '"]'
+        );
+        if (activeBtn) {
+          return activeBtn.getAttribute('data-size');
+        }
+        
+        return null; // No size selected
       }
 
       function selectSize(clickedBtn, productId) {
-        var allSizeBtns = document.querySelectorAll('.size-pill[data-product-id="' + productId + '"]');
+        // Convert productId to consistent type
+        var pid = String(productId);
+        
+        // Deselect ALL size pills for this product
+        var allSizeBtns = document.querySelectorAll(
+          '.size-pill[data-product-id="' + pid + '"]'
+        );
         allSizeBtns.forEach(function(btn) {
           btn.classList.remove('selected');
-          btn.style.background = 'white';
-          btn.style.color = '#1A1A1A';
-          btn.style.borderColor = '#ddd';
-          btn.style.fontWeight = '400';
-          btn.style.transform = 'scale(1)';
+          btn.classList.remove('active');
+          // Force inline style reset
+          btn.style.cssText = 
+            'background:white !important;' +
+            'color:#1A1A1A !important;' +
+            'border:1.5px solid #ddd !important;' +
+            'font-weight:500;' +
+            'transform:scale(1);' +
+            'box-shadow:none;';
         });
         
+        // Select the clicked button
         clickedBtn.classList.add('selected');
+        // Force coral styling with inline styles
+        // (overrides any CSS specificity issues)
+        clickedBtn.style.cssText = 
+          'background:#FF4D30 !important;' +
+          'color:white !important;' +
+          'border:1.5px solid #FF4D30 !important;' +
+          'font-weight:600 !important;' +
+          'transform:scale(1.05);' +
+          'box-shadow:0 2px 8px rgba(255,77,48,0.3);' +
+          'transition:all 150ms ease;';
         
-        var card = clickedBtn.closest('.product-card') || clickedBtn.closest('.car-card');
+        // Store selected size on parent card
+        var card = clickedBtn.closest('.product-card') 
+          || clickedBtn.closest('.car-card')
+          || clickedBtn.closest('[data-product-id]');
         if (card) {
-          card.setAttribute('data-selected-size', clickedBtn.getAttribute('data-size'));
+          card.setAttribute(
+            'data-selected-size', 
+            clickedBtn.getAttribute('data-size')
+          );
         }
-
-        var errorEl = document.querySelector('.size-error-msg[data-product-id="' + productId + '"]');
+        
+        // Hide size error message if showing
+        var errorEl = document.querySelector(
+          '.size-error-msg[data-product-id="' + 
+          pid + '"]'
+        );
         if (errorEl) errorEl.style.display = 'none';
       }
 
@@ -6437,62 +6560,129 @@
       }
 
       function handleOrderNow(productId, e) {
-        var product = allProducts.find(function(p) { return p.id === productId; });
-        if (!product) return;
+        // Convert to number AND string to handle 
+        // both types safely
+        var pid = Number(productId);
+        var pidStr = String(productId);
         
-        var selectedSize = getSelectedSize(product.id);
-        if (!selectedSize) {
-          showSizeError(product.id);
+        // Find product with loose comparison
+        var product = allProducts.find(function(p) {
+          return Number(p.id) === pid || 
+                 String(p.id) === pidStr;
+        });
+        
+        if (!product) {
+          console.error('Product not found:', productId);
           return;
         }
         
-        if (!requireAuth({ type: 'orderNow', product: product, size: selectedSize, id: productId }, e)) return;
+        var selectedSize = getSelectedSize(pidStr);
         
-        doOpenOrderDialog([Object.assign({}, product, { selectedSize: selectedSize, qty: 1 })]);
+        if (!selectedSize) {
+          showSizeError(pidStr);
+          return;
+        }
+        
+        if (!requireAuth({
+          type: 'orderNow',
+          product: product,
+          size: selectedSize,
+          id: pid
+        }, e)) return;
+        
+        doOpenOrderDialog([Object.assign({}, product, {
+          selectedSize: selectedSize,
+          size: selectedSize,
+          qty: 1
+        })]);
       }
 
       function addToCart(productId, e) {
-        var product = allProducts.find(function(p) { return p.id === productId; });
-        if (!product) return;
-
-        var selectedSize = getSelectedSize(product.id);
-        if (!selectedSize) {
-          showSizeError(product.id);
+        var pid = Number(productId);
+        var pidStr = String(productId);
+        
+        var product = allProducts.find(function(p) {
+          return Number(p.id) === pid || 
+                 String(p.id) === pidStr;
+        });
+        
+        if (!product) {
+          console.error('Product not found:', productId);
           return;
         }
         
-        if (!requireAuth({ type: 'addToCart', product: product, size: selectedSize, id: productId }, e)) return;
+        var selectedSize = getSelectedSize(pidStr);
+        
+        if (!selectedSize) {
+          showSizeError(pidStr);
+          return;
+        }
+        
+        if (!requireAuth({
+          type: 'addToCart',
+          product: product,
+          size: selectedSize,
+          id: pid
+        }, e)) return;
         
         doAddToCart(product, selectedSize);
       }
 
       function doAddToCart(product, size) {
-        var id = product.id;
-        var activePrice = product.salePrice || product.price;
-
-        var existing = cart.find(function(item) {
-          return item.id === id && (item.selectedSize === size || item.size === size);
-        });
-
-        if (existing) {
-          existing.qty += 1;
-        } else {
-          cart.push(Object.assign({}, product, { price: activePrice, qty: 1, selectedSize: size, size: size }));
-        }
-
-        updateCartBadge();
+        var pid = Number(product.id);
+        var pidStr = String(product.id);
+        var activePrice = product.salePrice 
+          || product.price;
         
-        var btns = document.querySelectorAll('.add-to-cart-btn[data-product-id="' + id + '"]');
-        btns.forEach(function(btn) {
+        // Check if already in cart with same size
+        var existing = cart.find(function(item) {
+          return (Number(item.id) === pid) && 
+                 (item.selectedSize === size || 
+                  item.size === size);
+        });
+        
+        if (existing) {
+          existing.qty = (existing.qty || 1) + 1;
+        } else {
+          cart.push(Object.assign({}, product, {
+            price: activePrice,
+            qty: 1,
+            selectedSize: size,
+            size: size
+          }));
+        }
+        
+        // Update cart UI
+        updateCartBadge();
+        renderCart();
+        
+        // Update ALL "Add to Cart" buttons 
+        // for this product to "Added" state
+        var addBtns = document.querySelectorAll(
+          '.add-to-cart-btn[data-product-id="' + 
+          pidStr + '"], ' +
+          '.add-to-cart-btn[data-product-id="' + 
+          pid + '"]'
+        );
+        addBtns.forEach(function(btn) {
           btn.classList.add('added');
           btn.innerHTML = '✓ Added';
-          btn.style.transform = 'scale(1.08)';
+          btn.style.cssText = 
+            'background:#FF4D30 !important;' +
+            'color:white !important;' +
+            'cursor:default;' +
+            'pointer-events:none;' +
+            'opacity:1;';
+          // Pulse animation
+          btn.style.transform = 'scale(1.06)';
           setTimeout(function() {
             btn.style.transform = 'scale(1)';
           }, 150);
         });
-
-        showToast(product.name);
+        
+        // Show toast
+        showToast('✓ ' + product.name + 
+          ' (Size ' + size + ') added to cart!');
       }
 
       function removeFromCart(id) {
@@ -6500,23 +6690,47 @@
         updateCartBadge();
         renderCart();
 
-        var btns = document.querySelectorAll(
-          '.add-to-cart-btn[data-product-id="' + id + '"]'
-        );
-        btns.forEach(function(btn) {
-          btn.classList.remove('added');
-          btn.innerHTML = '🛒 Add to Cart';
-          btn.style.pointerEvents = 'auto';
+        var removedId = id;
+        
+        // After removing: check if product is 
+        // still in cart (different size might remain)
+        var stillInCart = cart.some(function(item) {
+          return Number(item.id) === Number(removedId);
         });
+        
+        if (!stillInCart) {
+          // Revert button back to "Add to Cart"
+          var addBtns = document.querySelectorAll(
+            '.add-to-cart-btn[data-product-id="' + 
+            removedId + '"], ' +
+            '.add-to-cart-btn[data-product-id="' + 
+            String(removedId) + '"]'
+          );
+          addBtns.forEach(function(btn) {
+            btn.classList.remove('added');
+            btn.innerHTML = '🛒 Add to Cart';
+            btn.style.cssText = 
+              'background:#1A1A1A;' +
+              'color:white;' +
+              'cursor:pointer;' +
+              'pointer-events:auto;' +
+              'opacity:1;';
+          });
+        }
       }
 
       function resetAllCartButtons() {
-        var btns = document.querySelectorAll('.add-to-cart-btn');
-        btns.forEach(function(btn) {
-          btn.classList.remove('added');
-          btn.innerHTML = '🛒 Add to Cart';
-          btn.style.pointerEvents = 'auto';
-        });
+        document.querySelectorAll(
+          '.add-to-cart-btn')
+          .forEach(function(btn) {
+            btn.classList.remove('added');
+            btn.innerHTML = '🛒 Add to Cart';
+            btn.style.cssText = 
+              'background:#1A1A1A;' +
+              'color:white;' +
+              'cursor:pointer;' +
+              'pointer-events:auto;';
+          });
       }
 
       function updateQty(id, delta) {
@@ -7086,38 +7300,59 @@
       }
 
       function executePendingAction() {
-        if (!pendingAction) {
-          try {
-            var saved = sessionStorage.getItem("eshirt_pending_action");
-            if (saved) {
-              pendingAction = JSON.parse(saved);
-              sessionStorage.removeItem("eshirt_pending_action");
-            }
-          } catch (e) {}
-        }
-
-        if (!pendingAction) return;
-
+        // Try in-memory pendingAction first
         var action = pendingAction;
+        
+        // Fallback: check sessionStorage 
+        // (survives Google redirect page reload)
+        if (!action) {
+          try {
+            var saved = sessionStorage.getItem(
+              'eshirt_pending_action');
+            if (saved) {
+              action = JSON.parse(saved);
+              sessionStorage.removeItem(
+                'eshirt_pending_action');
+            }
+          } catch(err) {}
+        }
+        
         pendingAction = null;
-
-        setTimeout(function () {
-          if (action.type === "addToCart") {
+        if (!action) return;
+        
+        // Small delay to let UI settle
+        setTimeout(function() {
+          if (action.type === 'addToCart') {
             if (action.product && action.size) {
               doAddToCart(action.product, action.size);
-            } else {
-              addToCart(action.payload ? action.payload.id : action.id, null);
+            } else if (action.id) {
+              // Fallback: find product and use 
+              // whatever size was selected
+              var p = allProducts.find(function(pr) {
+                return Number(pr.id) === 
+                  Number(action.id);
+              });
+              if (p) {
+                var sz = getSelectedSize(
+                  String(action.id)) || 'M';
+                doAddToCart(p, sz);
+              }
             }
-          } else if (action.type === "orderNow") {
+          } else if (action.type === 'orderNow') {
             if (action.product && action.size) {
-              doOpenOrderDialog([Object.assign({}, action.product, { selectedSize: action.size, qty: 1 })]);
-            } else {
-              handleOrderNow(action.payload ? action.payload.id : action.id, null);
+              doOpenOrderDialog([Object.assign({},
+                action.product, {
+                  selectedSize: action.size,
+                  size: action.size,
+                  qty: 1
+                })]);
             }
-          } else if (action.type === "checkout") {
-            handleCheckout();
+          } else if (action.type === 'checkout') {
+            if (cart.length > 0) {
+              doOpenOrderDialog([...cart]);
+            }
           }
-        }, 600);
+        }, 400);
       }
 
       function handleGoogleSignIn() {
@@ -8072,6 +8307,11 @@
       window.hideCancelBox = hideCancelBox;
       window.cancelOrder = cancelOrder;
       window.toggleTrackPanel = toggleTrackPanel;
+      window.doAddToCart = doAddToCart;
+      window.executePendingAction = executePendingAction;
+      window.resetAllCartButtons = resetAllCartButtons;
+      window.resetOrderDialogToForm = resetOrderDialogToForm;
+      window.getSelectedSize = getSelectedSize;
     </script>
   </body>
 </html>
