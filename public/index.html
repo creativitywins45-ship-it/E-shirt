@@ -5250,35 +5250,37 @@
       const db = getFirestore(app);
       const googleProvider = new GoogleAuthProvider();
 
+      // Handle Google redirect result on page load.
+      // This fires when user returns from Google sign in.
       getRedirectResult(auth)
-        .then(function (result) {
+        .then(function(result) {
           if (result && result.user) {
+            // Restore pending action from sessionStorage
             try {
-              var saved = sessionStorage.getItem("eshirt_pending_action");
+              var saved = sessionStorage.getItem('eshirt_pending_action');
               if (saved) {
                 pendingAction = JSON.parse(saved);
-                sessionStorage.removeItem("eshirt_pending_action");
+                sessionStorage.removeItem('eshirt_pending_action');
               }
-            } catch (e) {}
+            } catch(e) {}
 
-            var name =
-              result.user.displayName || result.user.email.split("@")[0];
+            var name = result.user.displayName || result.user.email.split('@')[0];
             name = name.charAt(0).toUpperCase() + name.slice(1);
 
-            setTimeout(function () {
-              showWelcomeToast("👋 Welcome, " + name + "!");
+            // Show welcome toast after short delay
+            setTimeout(function() {
+              showWelcomeToast('👋 Welcome, ' + name + '!');
               executePendingAction();
             }, 500);
           }
         })
-        .catch(function (error) {
-          if (
-            error.code &&
-            error.code !== "auth/no-current-user" &&
-            error.code !== "auth/null-user"
-          ) {
-            setTimeout(function () {
-              showWelcomeToast("❌ Google sign in failed: " + error.code);
+        .catch(function(error) {
+          // Only log real errors, not "no redirect"
+          if (error.code &&
+              error.code !== 'auth/no-current-user' &&
+              error.code !== 'auth/null-user') {
+            setTimeout(function() {
+              showWelcomeToast('❌ Google sign in failed: ' + error.code);
             }, 500);
           }
         });
@@ -7289,76 +7291,67 @@
         }
       }
 
-      async function handleEmailSignUp() {
-        const nameField = document.getElementById("signup-name");
-        const emailField = document.getElementById("signup-email");
-        const passwordField = document.getElementById("signup-password");
-        const confirmField = document.getElementById("signup-confirm");
+      function handleEmailSignUp() {
+        var nameField = document.getElementById('signup-name');
+        var emailField = document.getElementById('signup-email');
+        var passwordField = document.getElementById('signup-password');
+        var confirmField = document.getElementById('signup-confirm');
 
-        if (!nameField || !emailField || !passwordField || !confirmField)
-          return;
+        if (!nameField || !emailField || !passwordField || !confirmField) return;
 
+        // Force blur to close mobile keyboard first
         nameField.blur();
         emailField.blur();
         passwordField.blur();
         confirmField.blur();
 
-        const fullName = nameField.value.trim();
-        const email = emailField.value.trim();
-        const password = passwordField.value;
-        const confirmPassword = confirmField.value;
+        var fullName = nameField.value.trim();
+        var email = emailField.value.trim();
+        var password = passwordField.value;
+        var confirmPassword = confirmField.value;
 
-        let hasError = false;
+        hideInlineError('signup-form-error');
 
         if (!fullName) {
-          shakeField("signup-name");
-          hasError = true;
+          shakeField('signup-name');
+          showInlineError('signup-form-error', 'Name is required');
+          return;
         }
-        if (!email || !email.includes("@")) {
-          shakeField("signup-email");
-          hasError = true;
+        if (!email || !email.includes('@')) {
+          shakeField('signup-email');
+          showInlineError('signup-form-error', 'Please enter a valid email');
+          return;
         }
         if (password.length < 6) {
-          shakeField("signup-password");
-          showInlineError(
-            "signup-form-error",
-            "Password must be at least 6 characters",
-          );
-          hasError = true;
+          shakeField('signup-password');
+          showInlineError('signup-form-error', 'Password must be at least 6 characters');
+          return;
         }
         if (password !== confirmPassword) {
-          shakeField("signup-confirm");
-          showInlineError("signup-form-error", "Passwords do not match");
-          hasError = true;
+          shakeField('signup-confirm');
+          showInlineError('signup-form-error', 'Passwords do not match');
+          return;
         }
-        if (hasError) return;
 
-        setAuthButtonLoading("signup-btn", true, "Creating Account...");
+        setAuthButtonLoading('signup-btn', true, 'Creating Account...');
 
-        try {
-          const userCredential = await createUserWithEmailAndPassword(
-            auth,
-            email,
-            password,
-          );
-          const user = userCredential.user;
-
-          await sendEmailVerification(user);
-
-          // UPDATE DISPLAY NAME
-          try {
-            await updateProfile(user, { displayName: fullName });
-          } catch (e) {}
-
-          // Enforce verification by signing out immediately
-          await signOut(auth);
-
-          closeModals();
-          showEmailVerificationDialog(email);
-        } catch (error) {
-          setAuthButtonLoading("signup-btn", false, "Create Account");
-          handleFirebaseError(error, "signup");
-        }
+        createUserWithEmailAndPassword(auth, email, password)
+          .then(function(cred) {
+            var user = cred.user;
+            updateProfile(user, { displayName: fullName }).catch(function(){});
+            return sendEmailVerification(user).then(function() {
+              return signOut(auth);
+            });
+          })
+          .then(function() {
+            setAuthButtonLoading('signup-btn', false, 'Create Account');
+            closeModals();
+            showEmailVerificationDialog(email);
+          })
+          .catch(function(error) {
+            setAuthButtonLoading('signup-btn', false, 'Create Account');
+            handleFirebaseError(error, 'signup');
+          });
       }
 
       function showEmailVerificationDialog(email) {
@@ -7398,77 +7391,68 @@
         }
       }
 
-      async function handleEmailSignIn() {
-        const emailField = document.getElementById("signin-email");
-        const passwordField = document.getElementById("signin-password");
-
+      function handleEmailSignIn() {
+        // Read values immediately on button click
+        // before anything else — mobile keyboards
+        // can cause fields to blur and lose focus
+        var emailField = document.getElementById(
+          'signin-email');
+        var passwordField = document.getElementById(
+          'signin-password');
+          
         if (!emailField || !passwordField) return;
-
+        
+        // Force blur to close mobile keyboard first
         emailField.blur();
         passwordField.blur();
+        
+        var email = emailField.value.trim();
+        var password = passwordField.value;
 
-        const email = emailField.value.trim();
-        const password = passwordField.value;
+        hideInlineError('signin-form-error');
 
-        let hasError = false;
-        if (!email || !email.includes("@")) {
-          shakeField("signin-email");
-          hasError = true;
+        if (!email || !email.includes('@')) {
+          shakeField('signin-email');
+          showInlineError('signin-form-error',
+            '⚠️ Please enter a valid email address.');
+          return;
         }
         if (!password || password.length < 1) {
-          shakeField("signin-password");
-          hasError = true;
+          shakeField('signin-password');
+          showInlineError('signin-form-error',
+            '⚠️ Please enter your password.');
+          return;
         }
-        if (hasError) return;
 
-        setAuthButtonLoading("signin-btn", true, "Signing In...");
+        setAuthButtonLoading('signin-btn', true,
+          'Signing In...');
 
-        try {
-          const userCredential = await signInWithEmailAndPassword(
-            auth,
-            email,
-            password,
-          );
-          const user = userCredential.user;
-
-          if (!user.emailVerified) {
-            await signOut(auth);
-            setAuthButtonLoading("signin-btn", false, "Sign In");
-            showInlineError(
-              "signin-form-error",
-              "⚠️ Please verify your email first. Check your inbox for the verification link.",
-            );
-
-            let resend = document.getElementById(
-              "resendVerificationContainerSignIn",
-            );
-            if (!resend) {
-              const errEl = document.getElementById("signin-form-error");
-              resend = document.createElement("div");
-              resend.id = "resendVerificationContainerSignIn";
-              resend.style.marginTop = "10px";
-              resend.style.textAlign = "center";
-              resend.innerHTML = `<a href="javascript:void(0)" style="font-size: 0.9rem; color: #888; text-decoration: underline;" onclick="resendVerificationEmailByCreds('${email}','${password}')">Resend verification email</a>`;
-              errEl.parentElement.insertBefore(resend, errEl.nextSibling);
+        signInWithEmailAndPassword(auth, email, password)
+          .then(function(cred) {
+            if (!cred.user.emailVerified) {
+              return signOut(auth).then(function() {
+                setAuthButtonLoading(
+                  'signin-btn', false, 'Sign In');
+                showInlineError('signin-form-error',
+                  '⚠️ Email not verified. Check your ' +
+                  'inbox and click the verification link.');
+              });
             }
-            return;
-          }
-
-          closeModals();
-          isUserSignedIn = true;
-          showWelcomeToast(
-            "👋 Welcome back, " +
-              (user.displayName || email.split("@")[0]) +
-              "!",
-          );
-
-          if (pendingAction) {
-            executePendingAction();
-          }
-        } catch (error) {
-          setAuthButtonLoading("signin-btn", false, "Sign In");
-          handleFirebaseError(error, "signin");
-        }
+            setAuthButtonLoading('signin-btn', false, 
+              'Sign In');
+            closeModals();
+            var name = cred.user.displayName
+              || email.split('@')[0];
+            name = name.charAt(0).toUpperCase()
+              + name.slice(1);
+            showWelcomeToast('👋 Welcome back, ' + name + '!');
+            if (pendingAction) executePendingAction();
+          })
+          .catch(function(error) {
+            setAuthButtonLoading('signin-btn', false, 
+              'Sign In');
+            handleFirebaseError(error, "signin");
+          });
       }
 
       async function resendVerificationEmailByCreds(email, password) {
@@ -7549,84 +7533,31 @@
       }
 
       function handleGoogleSignIn() {
+        // Save pending action to sessionStorage
+        // so it survives the page reload after redirect
         if (pendingAction) {
           try {
             sessionStorage.setItem(
               'eshirt_pending_action',
-              JSON.stringify(pendingAction));
+              JSON.stringify(pendingAction)
+            );
           } catch(e) {}
         }
-
-        var isMobile = window.innerWidth < 768 ||
-          /Android|iPhone|iPad|Mobile/i
-            .test(navigator.userAgent);
 
         setGoogleButtonLoading(
           true, 'Redirecting to Google...');
 
-        // Safety timeout — if nothing happens 
-        // in 10 seconds, reset button state
-        var safetyTimer = setTimeout(function() {
-          setGoogleButtonLoading(
-            false, 'Continue with Google');
-        }, 10000);
-
-        if (isMobile) {
-          // Use redirect for mobile
+        // Small delay so user sees the loading state
+        setTimeout(function() {
           signInWithRedirect(auth, googleProvider)
             .catch(function(error) {
-              clearTimeout(safetyTimer);
               setGoogleButtonLoading(
                 false, 'Continue with Google');
-              if (error.code !== 
-                'auth/popup-closed-by-user') {
+              if (error.code !== 'auth/popup-closed-by-user') {
                 handleFirebaseError(error, 'google');
               }
             });
-        } else {
-          // Use popup for desktop
-          setTimeout(function() {
-            signInWithPopup(auth, googleProvider)
-              .then(function(result) {
-                clearTimeout(safetyTimer);
-                setGoogleButtonLoading(
-                  false, 'Continue with Google');
-                closeModals();
-                var name = result.user.displayName
-                  || result.user.email.split('@')[0];
-                name = name.charAt(0).toUpperCase()
-                  + name.slice(1);
-                setTimeout(function() {
-                  showWelcomeToast(
-                    '👋 Welcome, ' + name + '!');
-                  try {
-                    var saved = sessionStorage
-                      .getItem('eshirt_pending_action');
-                    if (saved) {
-                      pendingAction = JSON.parse(saved);
-                      sessionStorage.removeItem(
-                        'eshirt_pending_action');
-                    }
-                  } catch(e) {}
-                  if (pendingAction) {
-                    executePendingAction();
-                  }
-                }, 500);
-              })
-              .catch(function(error) {
-                clearTimeout(safetyTimer);
-                setGoogleButtonLoading(
-                  false, 'Continue with Google');
-                if (error.code !== 
-                  'auth/popup-closed-by-user' &&
-                  error.code !== 
-                  'auth/cancelled-popup-request') {
-                  handleFirebaseError(
-                    error, 'google');
-                }
-              });
-          }, 300);
-        }
+        }, 300);
       }
 
       async function handleSignOut() {
