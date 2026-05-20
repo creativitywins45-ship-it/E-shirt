@@ -5224,6 +5224,14 @@
         doc,
         setDoc,
         getDoc,
+        collection,
+        getDocs,
+        writeBatch,
+        serverTimestamp,
+        deleteDoc,
+        updateDoc,
+        query,
+        orderBy
       } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
       const firebaseConfig = {
@@ -6004,7 +6012,7 @@
           grid.innerHTML += `
               <div class="shop-product-card" style="animation: fadeSlideUp 0.6s ease forwards ${delay}ms; opacity: 0; transform: translateY(20px);">
                  ${badgeHtml}
-                 <button class="card-wishlist" onclick="this.classList.toggle('active')"><i class="fa-solid fa-heart"></i></button>
+                 <button class="card-wishlist wishlist-btn" data-product-id="${p.id}" onclick="toggleWishlist('${p.id}', this)"><i class="fa-regular fa-heart"></i></button>
                  <div class="card-img-area">
                     <img 
                       src="${p.image}" 
@@ -6040,6 +6048,9 @@
               </div>
            `;
         });
+        if (typeof updateWishlistIcons === 'function') {
+          updateWishlistIcons();
+        }
       }
 
       // --- Navbar Scroll Effect ---
@@ -6174,7 +6185,7 @@
                   onerror="this.onerror=null; this.style.background='${p.fallbackGradient}'; this.src='';"
                 />
                 ${badgeHtml}
-                <button class="car-wishlist" onclick="const i = this.children[0]; if(i.classList.contains('fa-regular')){ i.classList.replace('fa-regular', 'fa-solid'); this.classList.add('active'); } else { i.classList.replace('fa-solid', 'fa-regular'); this.classList.remove('active'); }"><i class="fa-regular fa-heart"></i></button>
+                <button class="car-wishlist wishlist-btn" data-product-id="${p.id}" onclick="toggleWishlist('${p.id}', this)"><i class="fa-regular fa-heart"></i></button>
                 
                 <div class="car-add-wrapper" style="display:flex; flex-direction:column; gap:0.5rem;">
                   <button class="${addBtnClass}" style="${addBtnStyle}" data-product-id="${p.id}" onclick="addToCart(${p.id}, event)">${addBtnText}</button>
@@ -6211,6 +6222,9 @@
           track.style.transition =
             "transform 480ms cubic-bezier(0.25, 0.46, 0.45, 0.94)";
           startCarouselAutoPlay();
+          if (typeof updateWishlistIcons === 'function') {
+            updateWishlistIcons();
+          }
         }, 20);
       }
 
@@ -7702,6 +7716,9 @@
 
       function doOpenOrderDialog(items) {
         resetOrderDialogToForm();
+        if (typeof prefillOrderForm === 'function') {
+          prefillOrderForm();
+        }
         currentCheckoutItems = items;
         
         const itemsContainer = document.getElementById("checkoutDialogItems");
@@ -7847,9 +7864,13 @@
         deliveryDate.setDate(deliveryDate.getDate() + 5);
 
         var deliveryName = document.getElementById('chkName').value.trim();
+        var deliveryPhone = document.getElementById('chkPhone').value.trim();
+        var deliveryEmail = document.getElementById('chkEmail').value.trim();
+        var deliveryAddress = document.getElementById('chkAddress').value.trim();
         var deliveryCity = document.getElementById('chkCity').value.trim();
         var deliveryState = document.getElementById('chkState').value.trim();
         var deliveryPin = document.getElementById('chkPin').value.trim();
+        var deliveryCountry = document.getElementById('chkCountry').value.trim();
 
         var paymentPill = document.querySelector('.payment-pill.active');
         var paymentMethod = paymentPill ? paymentPill.textContent.trim().split(" ").slice(1).join(" ") : 'Cash on Delivery';
@@ -7883,14 +7904,37 @@
           total: subtotal > 0 ? subtotal + 4.99 : 0,
           delivery: {
             name: deliveryName,
+            phone: deliveryPhone,
+            email: deliveryEmail,
+            address: deliveryAddress,
             city: deliveryCity,
             state: deliveryState,
-            pin: deliveryPin
+            pin: deliveryPin,
+            country: deliveryCountry
           },
           paymentMethod: paymentMethod
         };
 
         ordersData.unshift(newOrder);
+        
+        if (typeof saveOrderToFirestore === 'function') {
+          saveOrderToFirestore(newOrder);
+        }
+        if (typeof savePreferencesToFirestore === 'function') {
+          savePreferencesToFirestore({
+            savedAddress: {
+              name: deliveryName,
+              phone: deliveryPhone,
+              email: deliveryEmail,
+              address: deliveryAddress,
+              city: deliveryCity,
+              state: deliveryState,
+              pin: deliveryPin,
+              country: deliveryCountry
+            },
+            lastPaymentMethod: paymentMethod
+          });
+        }
 
         // Clear cart if this was a cart checkout
         let fromCart = false;
@@ -8043,6 +8087,9 @@
         const order = ordersData.find((o) => o.id === orderId);
         if (order) {
           order.status = "Cancelled";
+          if (typeof updateOrderStatusInFirestore === 'function') {
+            updateOrderStatusInFirestore(orderId, "Cancelled");
+          }
         }
         const currentTab = document
           .querySelector(".order-tab.active")
@@ -8276,6 +8323,229 @@
         });
       }
 
+      // --- Firestore Persistence ---
+      var wishlist = [];
+      var savedAddress = null;
+      var lastPaymentMethod = 'Cash on Delivery';
+
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          await loadUserData(user.uid);
+        } else {
+          onUserSignedOut();
+        }
+      });
+
+      async function loadUserData(uid) {
+        try {
+          var userRef = doc(db, 'users', uid);
+          
+          // ── Load Cart ──────────────────────────
+          var cartSnap = await getDocs(collection(db, 'users', uid, 'cart'));
+          cart = [];
+          cartSnap.forEach(function(d) {
+            cart.push(d.data());
+          });
+          updateCartBadge();
+          renderCart();
+          
+          // ── Load Orders ────────────────────────
+          var ordersSnap = await getDocs(query(collection(db, 'users', uid, 'orders'), orderBy('createdAt', 'desc')));
+          ordersData = [];
+          ordersSnap.forEach(function(d) {
+            ordersData.push(d.data());
+          });
+          
+          // ── Load Wishlist ──────────────────────
+          var wishSnap = await getDocs(collection(db, 'users', uid, 'wishlist'));
+          wishlist = [];
+          wishSnap.forEach(function(d) {
+            wishlist.push(d.data().id);
+          });
+          updateWishlistIcons();
+          
+          // ── Load Preferences ──────────────────
+          var prefSnap = await getDoc(doc(db, 'users', uid, 'preferences', 'main'));
+          if (prefSnap.exists()) {
+            var prefs = prefSnap.data();
+            savedAddress = prefs.savedAddress || null;
+            lastPaymentMethod = prefs.lastPaymentMethod || 'Cash on Delivery';
+          }
+
+          // ── Update Add to Cart button states ──
+          cart.forEach(function(item) {
+            var btns = document.querySelectorAll('.add-to-cart-btn[data-product-id="' + item.id + '"]');
+            btns.forEach(function(btn) {
+              btn.classList.add('added');
+              btn.innerHTML = '✓ Added';
+              btn.style.cssText = 'background:#FF4D30 !important;color:white !important;pointer-events:none;cursor:default;';
+            });
+          });
+
+          // ── Update last login time ─────────────
+          setDoc(doc(db, 'users', uid, 'preferences', 'main'), {
+              lastLoginAt: serverTimestamp()
+          }, { merge: true });
+
+        } catch(err) {
+          console.error('Error loading user data:', err);
+        }
+      }
+
+      function saveCartToFirestore() {
+        if (!auth.currentUser) return;
+        var uid = auth.currentUser.uid;
+        var cartRef = collection(db, 'users', uid, 'cart');
+        
+        getDocs(cartRef).then(function(snap) {
+          var batch = writeBatch(db);
+          snap.forEach(function(d) {
+            batch.delete(d.ref);
+          });
+          return batch.commit();
+        }).then(function() {
+          var batch = writeBatch(db);
+          cart.forEach(function(item) {
+            var docId = String(item.id) + '_' + (item.selectedSize || item.size || 'M');
+            var docRef = doc(db, 'users', uid, 'cart', docId);
+            batch.set(docRef, {
+              id: item.id,
+              name: item.name,
+              image: item.image || '',
+              fallbackGradient: item.fallbackGradient || '',
+              selectedSize: item.selectedSize || item.size || 'M',
+              size: item.size || item.selectedSize || 'M',
+              qty: item.qty || 1,
+              price: item.price,
+              salePrice: item.salePrice || null,
+              description: item.description || ''
+            });
+          });
+          return batch.commit();
+        }).catch(function(err) {
+          console.error('Cart save error:', err);
+        });
+      }
+
+      function saveOrderToFirestore(order) {
+        if (!auth.currentUser) return;
+        var uid = auth.currentUser.uid;
+        setDoc(doc(db, 'users', uid, 'orders', order.id), Object.assign({}, order, {
+          createdAt: serverTimestamp()
+        })).catch(function(err) {
+          console.error('Order save error:', err);
+        });
+      }
+
+      function updateOrderStatusInFirestore(orderId, newStatus) {
+        if (!auth.currentUser) return;
+        updateDoc(doc(db, 'users', auth.currentUser.uid, 'orders', orderId), { status: newStatus })
+          .catch(function(err) {
+            console.error('Status update error:', err);
+          });
+      }
+
+      function toggleWishlist(productId, heartBtn) {
+        if (!auth.currentUser) {
+          openModal('signIn');
+          return;
+        }
+        var uid = auth.currentUser.uid;
+        var pid = Number(productId);
+        var wishDoc = doc(db, 'users', uid, 'wishlist', String(pid));
+        
+        var idx = wishlist.indexOf(pid);
+        if (idx === -1) {
+          wishlist.push(pid);
+          setDoc(wishDoc, { 
+            id: pid,
+            addedAt: serverTimestamp()
+          });
+          if (heartBtn) {
+            heartBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+            heartBtn.style.color = '#FF4D30';
+          }
+        } else {
+          wishlist.splice(idx, 1);
+          deleteDoc(wishDoc);
+          if (heartBtn) {
+            heartBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+            heartBtn.style.color = 'inherit';
+          }
+        }
+      }
+
+      function updateWishlistIcons() {
+        document.querySelectorAll('.wishlist-btn[data-product-id]').forEach(function(btn) {
+          var pid = Number(btn.getAttribute('data-product-id'));
+          if (wishlist.includes(pid)) {
+            btn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+            btn.style.color = '#FF4D30';
+          } else {
+            btn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+            btn.style.color = 'inherit';
+          }
+        });
+      }
+
+      function savePreferencesToFirestore(prefs) {
+        if (!auth.currentUser) return;
+        setDoc(doc(db, 'users', auth.currentUser.uid, 'preferences', 'main'), prefs, { merge: true })
+          .catch(function(err) {
+            console.error('Prefs save error:', err);
+          });
+      }
+
+      function prefillOrderForm() {
+        if (!savedAddress) return;
+        var fields = {
+          'chkName': savedAddress.name,
+          'chkPhone': savedAddress.phone,
+          'chkEmail': savedAddress.email || (auth.currentUser ? auth.currentUser.email : ''),
+          'chkAddress': savedAddress.address,
+          'chkCity': savedAddress.city,
+          'chkState': savedAddress.state,
+          'chkPin': savedAddress.pin,
+          'chkCountry': savedAddress.country || 'USA'
+        };
+        Object.keys(fields).forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el && fields[id]) el.value = fields[id];
+        });
+      }
+
+      function onUserSignedOut() {
+        cart = [];
+        ordersData = [];
+        wishlist = [];
+        savedAddress = null;
+        lastPaymentMethod = 'Cash on Delivery';
+        pendingAction = null;
+        
+        updateCartBadge();
+        renderCart();
+        if (typeof resetAllCartButtons === "function") {
+          resetAllCartButtons();
+        }
+        updateWishlistIcons();
+        
+        try {
+          sessionStorage.removeItem('eshirt_pending_action');
+        } catch(e) {}
+
+        var signinBtn = document.getElementById('navSignIn');
+        var signupBtn = document.getElementById('navSignUp');
+        var avatarArea = document.getElementById('userAvatarContainer');
+        var mobSignIn = document.getElementById('mobSignIn');
+        var mobSignUp = document.getElementById('mobSignUp');
+        
+        if (signinBtn) signinBtn.style.display = '';
+        if (signupBtn) signupBtn.style.display = '';
+        if (mobSignIn) mobSignIn.style.display = '';
+        if (mobSignUp) mobSignUp.style.display = '';
+        if (avatarArea) avatarArea.style.display = 'none';
+      }
+
       window.showShopPage = showShopPage;
       window.showLandingPage = showLandingPage;
       window.setShopView = setShopView;
@@ -8338,6 +8608,26 @@
       window.resetAllCartButtons = resetAllCartButtons;
       window.resetOrderDialogToForm = resetOrderDialogToForm;
       window.getSelectedSize = getSelectedSize;
+      window.toggleWishlist = toggleWishlist;
+      window.updateWishlistIcons = updateWishlistIcons;
     </script>
+    
+    <!--
+      FIRESTORE SECURITY RULES — Set in Firebase Console:
+      Firestore → Rules → paste these rules:
+
+      rules_version = '2';
+      service cloud.firestore {
+        match /databases/{database}/documents {
+          match /users/{userId}/{document=**} {
+            allow read, write: if request.auth != null 
+              && request.auth.uid == userId;
+          }
+        }
+      }
+      
+      This ensures users can only read/write their own data.
+      Go to: Firebase Console → Firestore Database → Rules
+    -->
   </body>
 </html>
