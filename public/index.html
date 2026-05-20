@@ -6829,27 +6829,168 @@
       }
 
       // --- Modals ---
+      function resetAuthModals() {
+        // ── Reset Google buttons ─────────────
+        var googleBtns = document.querySelectorAll(
+          '.google-signin-btn');
+        googleBtns.forEach(function(btn) {
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          btn.style.pointerEvents = 'auto';
+          btn.innerHTML = 
+            '<svg width="18" height="18" ' +
+            'viewBox="0 0 18 18">' +
+            '<path fill="#4285F4" d="M17.64 ' +
+            '9.2045c0-.6381-.0573-1.2518-.1636' +
+            '-1.8409H9v3.4814h4.8436c-.2086 ' +
+            '1.125-.8427 2.0782-1.7959 ' +
+            '2.7164v2.2581h2.9082c1.7018-1.5668' +
+            ' 2.6836-3.874 2.6836-6.615z"/>' +
+            '<path fill="#34A853" d="M9 18c2.43 ' +
+            '0 4.4673-.806 5.9564-2.1805l-2.9082' +
+            '-2.2581c-.8059.54-1.8368.859-3.0482' +
+            '.859-2.344 0-4.3282-1.5831-5.036' +
+            '-3.7104H.9574v2.3318C2.4382 15.9832' +
+            ' 5.4818 18 9 18z"/>' +
+            '<path fill="#FBBC05" d="M3.964 ' +
+            '10.71c-.18-.54-.2822-1.1168-.2822' +
+            '-1.71s.1023-1.17.2823-1.71V4.9582H' +
+            '.9573A8.9965 8.9965 0 000 9c0 ' +
+            '1.4523.3477 2.8268.9573 ' +
+            '4.0418L3.964 10.71z"/>' +
+            '<path fill="#EA4335" d="M9 ' +
+            '3.5795c1.3214 0 2.5077.4541 ' +
+            '3.4405 1.346l2.5813-2.5814C13.4632' +
+            ' .8918 11.426 0 9 0 5.4818 0 ' +
+            '2.4382 2.0168.9573 4.9582L3.964 ' +
+            '7.29C4.6718 5.1627 6.656 3.5795 ' +
+            '9 3.5795z"/></svg> ' +
+            'Continue with Google';
+        });
+
+        // ── Reset Sign In button ─────────────
+        var signinBtn = document.getElementById(
+          'signin-btn');
+        if (signinBtn) {
+          signinBtn.disabled = false;
+          signinBtn.style.opacity = '1';
+          signinBtn.style.pointerEvents = 'auto';
+          signinBtn.textContent = 'Sign In';
+        }
+
+        // ── Reset Sign Up button ─────────────
+        var signupBtn = document.getElementById(
+          'signup-btn');
+        if (signupBtn) {
+          signupBtn.disabled = false;
+          signupBtn.style.opacity = '1';
+          signupBtn.style.pointerEvents = 'auto';
+          signupBtn.textContent = 'Create Account';
+        }
+
+        // ── Clear Sign In fields ─────────────
+        var emailField = document.getElementById(
+          'signin-email');
+        var passField = document.getElementById(
+          'signin-password');
+        if (emailField) emailField.value = '';
+        if (passField) passField.value = '';
+
+        // ── Clear Sign Up fields ─────────────
+        ['signup-name','signup-email',
+         'signup-password','signup-confirm']
+          .forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.value = '';
+          });
+
+        // ── Hide all inline errors ───────────
+        ['signin-form-error','signup-form-error',
+         'reset-form-error']
+          .forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+              el.style.display = 'none';
+              el.textContent = '';
+            }
+          });
+
+        // ── Reset forgot password section ────
+        var forgotSection = document.getElementById(
+          'forgotPwdSection');
+        if (forgotSection) {
+          forgotSection.style.display = 'none';
+        }
+        var resetEmail = document.getElementById(
+          'reset-email');
+        if (resetEmail) resetEmail.value = '';
+
+        // ── Remove resend verification link ──
+        var resendContainer = document.getElementById(
+          'resendVerificationContainerSignIn');
+        if (resendContainer) {
+          resendContainer.remove();
+        }
+
+        // ── Hide context banners ─────────────
+        var signInBanner = document.getElementById(
+          'signInContextBanner');
+        var signUpBanner = document.getElementById(
+          'signUpContextBanner');
+        if (signInBanner) 
+          signInBanner.style.display = 'none';
+        if (signUpBanner) 
+          signUpBanner.style.display = 'none';
+
+        // ── Clear label float states ─────────
+        // Reset any floating labels back to 
+        // placeholder position
+        document.querySelectorAll(
+          '.modal .form-label, ' +
+          '.modal label.floating')
+          .forEach(function(label) {
+            label.classList.remove('active');
+            label.classList.remove('focused');
+          });
+      }
+
       function openModal(type) {
-        document.getElementById("authModalOverlay").classList.add("active");
-        document
-          .querySelectorAll(".modal")
-          .forEach((m) => m.classList.remove("active-modal"));
-        document.getElementById(type + "Modal").classList.add("active-modal");
+        // Reset to clean state before opening
+        resetAuthModals();
+        
+        document.getElementById(
+          'authModalOverlay')
+          .classList.add('active');
+        document.querySelectorAll('.modal')
+          .forEach(function(m) {
+            m.classList.remove('active-modal');
+          });
+        document.getElementById(
+          type + 'Modal')
+          .classList.add('active-modal');
       }
 
       function closeModals(e) {
-        if (
-          e &&
-          e.target !== document.getElementById("authModalOverlay") &&
-          !e.target.classList.contains("modal-close") &&
-          !e.target.closest(".modal-close")
-        )
-          return;
-        document.getElementById("authModalOverlay").classList.remove("active");
-        setTimeout(() => {
-          document
-            .querySelectorAll(".modal")
-            .forEach((m) => m.classList.remove("active-modal"));
+        if (e &&
+          e.target !== document.getElementById(
+            'authModalOverlay') &&
+          !e.target.classList.contains(
+            'modal-close') &&
+          !e.target.closest('.modal-close')
+        ) return;
+
+        document.getElementById(
+          'authModalOverlay')
+          .classList.remove('active');
+
+        setTimeout(function() {
+          document.querySelectorAll('.modal')
+            .forEach(function(m) {
+              m.classList.remove('active-modal');
+            });
+          // Reset modal to clean state
+          // whenever it is closed
+          resetAuthModals();
         }, 300);
       }
 
@@ -7399,74 +7540,146 @@
         if (pendingAction) {
           try {
             sessionStorage.setItem(
-              "eshirt_pending_action",
-              JSON.stringify(pendingAction),
-            );
-          } catch (e) {}
+              'eshirt_pending_action',
+              JSON.stringify(pendingAction));
+          } catch(e) {}
         }
 
-        setGoogleButtonLoading(true, "Waiting for Google...");
+        var isMobile = window.innerWidth < 768 ||
+          /Android|iPhone|iPad|Mobile/i
+            .test(navigator.userAgent);
 
-        setTimeout(function () {
-          signInWithPopup(auth, googleProvider)
-            .then(function(result) {
-              closeModals();
-              var name = result.user.displayName || result.user.email.split("@")[0];
-              name = name.charAt(0).toUpperCase() + name.slice(1);
-    
-              setTimeout(function () {
-                showWelcomeToast("👋 Welcome, " + name + "!");
-                try {
-                  var saved = sessionStorage.getItem("eshirt_pending_action");
-                  if (saved) {
-                    pendingAction = JSON.parse(saved);
-                    sessionStorage.removeItem("eshirt_pending_action");
-                  }
-                } catch (e) {}
+        setGoogleButtonLoading(
+          true, 'Redirecting to Google...');
 
-                if (pendingAction) {
-                  executePendingAction();
-                }
-              }, 500);
-            })
-            .catch(function (error) {
-              setGoogleButtonLoading(false, "Continue with Google");
-              if (
-                error.code !== "auth/popup-closed-by-user" &&
-                error.code !== "auth/cancelled-popup-request"
-              ) {
-                handleFirebaseError(error, "google");
+        // Safety timeout — if nothing happens 
+        // in 10 seconds, reset button state
+        var safetyTimer = setTimeout(function() {
+          setGoogleButtonLoading(
+            false, 'Continue with Google');
+        }, 10000);
+
+        if (isMobile) {
+          // Use redirect for mobile
+          signInWithRedirect(auth, googleProvider)
+            .catch(function(error) {
+              clearTimeout(safetyTimer);
+              setGoogleButtonLoading(
+                false, 'Continue with Google');
+              if (error.code !== 
+                'auth/popup-closed-by-user') {
+                handleFirebaseError(error, 'google');
               }
             });
-        }, 300);
+        } else {
+          // Use popup for desktop
+          setTimeout(function() {
+            signInWithPopup(auth, googleProvider)
+              .then(function(result) {
+                clearTimeout(safetyTimer);
+                setGoogleButtonLoading(
+                  false, 'Continue with Google');
+                closeModals();
+                var name = result.user.displayName
+                  || result.user.email.split('@')[0];
+                name = name.charAt(0).toUpperCase()
+                  + name.slice(1);
+                setTimeout(function() {
+                  showWelcomeToast(
+                    '👋 Welcome, ' + name + '!');
+                  try {
+                    var saved = sessionStorage
+                      .getItem('eshirt_pending_action');
+                    if (saved) {
+                      pendingAction = JSON.parse(saved);
+                      sessionStorage.removeItem(
+                        'eshirt_pending_action');
+                    }
+                  } catch(e) {}
+                  if (pendingAction) {
+                    executePendingAction();
+                  }
+                }, 500);
+              })
+              .catch(function(error) {
+                clearTimeout(safetyTimer);
+                setGoogleButtonLoading(
+                  false, 'Continue with Google');
+                if (error.code !== 
+                  'auth/popup-closed-by-user' &&
+                  error.code !== 
+                  'auth/cancelled-popup-request') {
+                  handleFirebaseError(
+                    error, 'google');
+                }
+              });
+          }, 300);
+        }
       }
 
       async function handleSignOut() {
         try {
+          // Close all dropdowns first
+          var avatarDropdown = document.getElementById(
+            'avatarDropdown');
+          if (avatarDropdown) 
+            avatarDropdown.classList.remove('active');
+          var dotsDropdown = document.getElementById(
+            'dotsDropdown');
+          if (dotsDropdown) 
+            dotsDropdown.classList.remove('active');
+
           await signOut(auth);
+
+          // Clear all user data
           cart = [];
+          ordersData = [];
+          pendingAction = null;
+          
+          try {
+            sessionStorage.removeItem(
+              'eshirt_pending_action');
+          } catch(e) {}
+
+          // Reset cart UI
           updateCartBadge();
-          if (typeof resetAllCartButtons === "function") {
+          if (typeof resetAllCartButtons === 
+            'function') {
             resetAllCartButtons();
           }
-          pendingAction = null;
+          if (typeof renderCartItems === 'function') {
+            renderCartItems();
+          }
 
-          const avatarDropdown = document.getElementById("avatarDropdown");
-          if (avatarDropdown) avatarDropdown.classList.remove("active");
-          const dotsDropdown = document.getElementById("dotsDropdown");
-          if (dotsDropdown) dotsDropdown.classList.remove("active");
+          // ── KEY FIX: Reset auth modals ────
+          // Do this BEFORE showing landing page
+          // so modal is clean if user clicks 
+          // Sign In immediately
+          resetAuthModals();
 
-          showWelcomeToast("👋 Signed out. See you soon!");
+          // Close modal overlay if open
+          var overlay = document.getElementById(
+            'authModalOverlay');
+          if (overlay) {
+            overlay.classList.remove('active');
+          }
 
-          if (
-            document
-              .getElementById("orders-page")
-              .classList.contains("active-view")
-          ) {
+          // Navigate to home if on orders page
+          var ordersPage = document.getElementById(
+            'orders-page');
+          if (ordersPage && 
+              ordersPage.classList.contains(
+                'active-view')) {
             showLandingPage();
           }
+
+          showWelcomeToast(
+            '👋 Signed out. See you soon!');
+
         } catch (error) {
-          showWelcomeToast("❌ Sign out failed. Try again.");
+          console.error('Sign out error:', error);
+          showWelcomeToast(
+            '❌ Sign out failed. Try again.');
         }
       }
 
@@ -8610,6 +8823,7 @@
       window.getSelectedSize = getSelectedSize;
       window.toggleWishlist = toggleWishlist;
       window.updateWishlistIcons = updateWishlistIcons;
+      window.resetAuthModals = resetAuthModals;
     </script>
     
     <!--
